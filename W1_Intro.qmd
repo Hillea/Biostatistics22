@@ -1,0 +1,332 @@
+---
+title: "Introduction to Biostatistics"
+subtitle: |
+   | Biostatistics 
+   | Translational Neuroscience
+   | WS22-23
+author: "Dr. Lea Hildebrandt"
+format: 
+  revealjs:
+    slide-number: true
+    theme: serif
+    chalkboard: true
+editor: visual
+from: markdown+emoji
+---
+
+## Hello!
+
+Who am I?
+
+. . .
+
+Who are you?
+
+-   What is your background?
+
+-   Do you have experience with data analysis?
+
+-   What's your attitude towards statistics?
+
+::: notes
+Do this interactively!
+
+Include part on stats anxiety here, maybe Menti
+:::
+
+## Organizational Issues
+
+::: incremental
+-   *Warning*: The course only lasts until mid-December - but we have to squeeze the content of the full semester in these 8 weeks!
+
+    -   This means, we'll have two sessions per week, Statistics (Input) on Tuesdays and R Programming (Hands-on) on Wednesdays
+
+-   The course will take place online!
+
+-   We will use these textbooks (Open Educational Resources - freely available online):
+
+    -   Statistical Thinking for the 21st Century (https://statsthinking21.github.io/statsthinking21-core-site/index.html)
+
+    -   For the R part: Fundamentals of Quantitative Analysis (https://psyteachr.github.io/quant-fun-v2/)
+:::
+
+## Contents
+
+::: incremental
+-   From basic probability to (Generalized) Linear Mixed Models
+-   Input (lecture style) with hands-on R sessions
+-   Input will be video based that you should watch before the (R) session
+-   In addition, you should read a few pages in the text book (OER: Statistical Thinking for the 21st Century, <https://statsthinking21.github.io/>)
+-   Project: Independently analyze a dataset
+:::
+
+## Project
+
+-   Find a dataset (this can be your own from an internship etc. or open data),
+
+-   preprocess/wrangle it,
+
+-   analyze the data,
+
+-   and write a report!
+
+## Calender {.scrollable .smaller}
+
+| Session | Date   | Topic                              | Date R | R Session                 | Reading     |
+|---------|--------|------------------------------------|--------|---------------------------|-------------|
+| 1       | 18.10. | Intro                              | 19.10. | Intro R                   | ST21: 1-3   |
+| 2       | 25.10. | Probability                        | 26.10. | Data Wrangling            | ST21: 4     |
+| 3       | 01.11. | *No Class - holiday*               | 02.11. | Data Visualization        |             |
+| 4       | 08.11. | Sampling                           | 09.11. | RMarkdown                 | ST21: 7-8   |
+| 5       | 15.11. | Hypothesis Testing                 | 16.11. | *No Class - holiday*      | ST21: 9-10  |
+| 6       | 22.11. | Comparing Means & Categorical Data | 23.11. | Exercises (t-Tests, Chi²) | ST21: 15    |
+| 7       | 29.11. | (Generalized) Linear Models        | 30.11. | Exercises                 | ST21: 12-13 |
+| 8       | 06.12. | Linear Mixed Models                | 07.12  | Exercises                 | ST21: 14    |
+| 9       | 13.12. | Deadline Report                    | 14.12  | AMA: Biostatistician      |             |
+
+# Why Statistics?
+
+## Why is it important that YOU know statistics?
+
+::: {.incremental .smaller}
+::: columns
+::: {.column .smaller width="80%"}
+-   You're doing a research master!
+
+    -   Research = Read papers (and understand the analyses), design experiments, analyze data, interpret results...
+
+-   We live in an increasingly data-centric world
+
+    -   Knowing how to wrangle and analyze data is a valuable skill
+
+-   Facts & data literacy matter more than ever!
+
+    -   Fake News, "Lying with stats", Reproducibility Crisis
+:::
+
+::: {.column width="10%"}
+:::
+
+::: {.column width="10%"}
+::: incremental
+[![Cover of "Calling Bullshit"](images/CallBS.jpg)](https://www.callingbullshit.org/)
+:::
+:::
+:::
+:::
+
+::: notes
+possibly show empirical cycle or the like to indicate that stats are necessary at almost every step
+:::
+
+## What is statistical thinking?
+
+::: incremental
+-   "a systematic way of thinking about how we describe the world and **use data make decisions and predictions**, all in the context of the inherent **uncertainty** that exists in the real world." (Poldrack, Preface ST21)
+
+-   "Statistical thinking is a way of **understanding** a complex world by describing it in relatively **simple terms** that nonetheless capture **essential aspects** of its structure or function, and that also provide us some idea of how **uncertain** we are about that knowledge." (Poldrack, Ch1)
+:::
+
+::: notes
+break down complexity, include uncertainty
+:::
+
+## Why is statistical thinking important?
+
+-   data literacy vs. intuition/heuristics/anecdotal evidence
+
+::: notes
+example availability heuristic from book (or any other example where intuition is wrong, i.e. vaccinations/covid...)
+
+\--\> test in class? Ask for opinion/intuition, show data
+:::
+
+## What can statistics do for us?
+
+-   **Describe** patterns by summarizing/breaking down data
+
+-   **Decide** whether one thing is better than another, given the uncertainty
+
+-   **Predict** how other people would "behave" (generalize to new observations)
+
+::: notes
+ask first in class?
+
+describe: not useful to look at every single data point/person, but we need s.th. like tendencies/trends...
+:::
+
+## The big ideas
+
+::: incremental
+-   **Learning from data**: Update our beliefs
+
+-   **Aggregation**: How to summarize the data to draw meaningful conclusions?
+
+-   **Uncertainty**: Probabilistic evidence
+
+-   **Sampling from the population**: Which people etc. do we select?
+:::
+
+::: notes
+ask for every point what I could mean w/ it?
+
+uncert: stats = tools for making decisions under uncert, we can never prove anything but provide evidence, there is no 100% certainty for an outcome (cancer)
+
+sampling: how do we represent the population? What is the population? how much data do we need? More is better, but payoff decreases...
+:::
+
+## Causality
+
+Correlation does not imply causation... but is a hint!
+
+Randomized Controlled Trials (RCT) as the solution?
+
+::: notes
+give example! Eat more fat = living longer? Confounders
+
+RCT: exp control and manipulation, removes confounds if done well\
+At least some more causal evidence!
+:::
+
+## What are data?
+
+-   What do you think are data?
+
+::: {.incremental .smaller}
+-   qualitative vs. quantitative
+
+    -   qualitative?
+
+        -   open questions, descriptions... can potentially be coded into categories
+
+    -   quantitative?
+
+        -   numeric, can be averaged etc.
+:::
+
+::: notes
+Collect: Do you have ideas? What are data you encounter in your lives/work etc? What are differences between these data?
+:::
+
+## What are data? (2)
+
+::: {.incremental .smaller}
+-   types of numbers (quantitative!)
+
+    -   binary: 0 or 1, TRUE or FALSE (logical)
+
+    -   integers: whole numbers
+
+    -   real numbers: decimals/fractions
+
+-   discrete vs. continuous
+
+    -   discrete?
+
+        -   finite set of particular values
+
+    -   continuous?
+
+        -   real numbers that fall into particular range
+:::
+
+::: notes
+discrete vs. continuous: question for examples or quiz
+:::
+
+## What is a data set?
+
+-   a collection of data
+
+-   usually organized into rows and columns (like an excel spreadsheet)
+
+    -   rows: participants/animals/cells...
+
+    -   columns: **variables**!
+
+        -   each variable contains one type of data/unique measurement
+
+    -   cells = unique observations of variables per participant etc.
+
+## What makes a good measurement?
+
+::: {.incremental .smaller}
+-   Discuss!
+
+-   What is being measured?
+
+    -   constructs -\> proxies
+
+        -   need to be well-defined! (Difficult)
+
+    -   measurement error
+
+        -   systematic: e.g. uncalibrated measurement device
+
+        -   random: e.g. variation in reaction times of same participant
+
+-   Do we have a "gold standard" to use when measuring data or to compare the measurement to?
+:::
+
+::: notes
+Group work/brainstorm:
+
+-   What are problems?
+
+-   Which kind of errors/when is data NOT good
+
+-   how can we minimize error?
+:::
+
+## Reliability
+
+Consistency of measurements!
+
+::: {.incremental .smaller}
+-   Test-retest reliability
+
+-   Inter-rater reliability
+
+-   Iternal consistency
+
+Relationship with other variables can't be higher than reliability (i.e. relationship with itself)!
+:::
+
+## Validity
+
+Are we measuring the construct we're interested in?
+
+::: incremental
+-   Face validity: Does it intuitively make sense? First reality check!
+
+-   Construct validity
+
+    -   convergent validity: Related to similar measures, which should measure same construct?
+
+    -   divergent validity: Unrelated to other measures?
+
+-   Predictive validity: Is it predictive of other outcomes?
+:::
+
+## Summarizing data
+
+::: {.incremental .smaller}
+-   = Throw away data!
+
+    -   allows us to generalize (by categorizing)
+
+    -   and to make predictions
+
+-   Counts, frequencies, percentages, averages
+:::
+
+## Thanks! {.scrollable}
+
+-   This week: R session "Intro to R"
+
+    -   please install R & RStudio in advance!
+        -   https://learningstatisticswithr-bookdown.netlify.app/intror (one of many tutorials how to do so)
+
+        -   Please also install Rtools: https://cran.r-project.org/bin/windows/Rtools/
+
+-   Next week: Models & probability, next R session!

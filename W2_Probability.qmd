@@ -1,0 +1,778 @@
+---
+title: "Models & Probability"
+subtitle: "Biostatistics"
+author: "Dr. Lea Hildebrandt"
+format: 
+  revealjs:
+    slide-number: true
+    theme: serif
+    chalkboard: true
+editor: visual
+from: markdown+emoji
+---
+
+# Fitting Models to Data
+
+```{r}
+#| echo: false
+#| message: false
+
+library(tidyverse)
+library(NHANES)
+library(cowplot)
+library(mapproj)
+library(pander)
+library(knitr)
+library(modelr)
+panderOptions('round',2)
+panderOptions('digits',7)
+options(digits = 2)
+set.seed(123456) # set random seed to exactly replicate results
+```
+
+## What is a Model?
+
+> " "models" are generally simplifications of things in the real world that nonetheless convey the essence of the thing being modeled"
+>
+> "All models are wrong but some are useful" (G. Box)
+
+(ST21, Ch 5)
+
+**. . .**
+
+**Aim**: Find the model that most efficiently and accurately summarizes the way in which the data were actually generated.
+
+Basic structure of statistical models:
+
+$$
+data=model+error
+$$
+
+::: notes
+a statistical model is generally much simpler than the data being described; it is meant to capture the structure of the data as simply as possible.
+
+Two parts:
+
+-   one portion that is described by a statistical model, which expresses the values that we expect the data to take given our knowledge,
+
+-   *error* that reflects the difference between the model's predictions and the observed data.
+:::
+
+## Statistical Models
+
+In general, we want to predict single observations (denoted by i) from the model. The fact that we are looking at predictions of observations and not actual values of the data is denoted by the "hat":
+
+$$
+\widehat{data_i} = model_i
+$$ The error is then simply the deviation of the actual data from the predicted values:
+
+$$ 
+error_i = data_i - \widehat{data_i}
+$$ If this doesn't make much sense yet, let's look at an example.
+
+::: notes
+This means that the predicted value of the data for observation i is equal to the value of the model for that observation.
+:::
+
+## A Simple Model
+
+Let's say we want to have a model of height of children (in the NHANES dataset also used in ST21).
+
+What do you think would be a good model?
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+# drop duplicates
+NHANES <- 
+  NHANES %>% 
+  dplyr::distinct(ID, .keep_all = TRUE)
+
+# select the appropriate children with good height measurements
+NHANES_child <- 
+  NHANES %>%
+  drop_na(Height) %>%
+  subset(Age < 18)
+NHANES_child %>% 
+  ggplot(aes(Height)) + 
+  geom_histogram(bins = 100)
+```
+
+## A Simple Model 2
+
+The simplest model would be... the mean of the height values! This would imply that the model would predict the same height for everyone - and all individual deviations would be part of the error term.
+
+We can write such a simple model as a formula:
+
+$$
+y_i = \beta + \epsilon
+$$
+
+$y_i$ denotes the individual observations (hence the $i$) of heights, $\beta$ is a so-called parameter, and $\epsilon$ is the error term. In this example, the parameter $\beta$ would be the same value (= the mean height) for everyone (hence it doesn't need a $i$ subscript). *Parameters* are values that we estimate to find the best model.
+
+## A Simple Model 3
+
+How do we find parameters that belong to the best fitting model?
+
+. . .
+
+We try to minimize the error!
+
+Remember, the error is the difference between the actual and predicted values of $y$ (height):
+
+$$
+error_i = y_i - \hat{y_i}
+$$
+
+If we select a predicted value of 400cm, all individuals' errors would hugely deviate (because no one is 4m tall). If we average these errors, it would still be a big value.
+
+A better candidate for such a simple model is thus the arithmetic mean or average:
+
+$$
+\bar{X} = \frac{\sum_{i=1}^{n}x_i}{n}
+$$
+
+Summing up all individual's heights and dividing that number by the number of individuals gives us the mean. By definition (see book for proof, the individual errors cancel out), the average error is now 0!
+
+## A Note on Errors
+
+We usually don't simply average across the individual errors, but across the squared errors.
+
+The reason is that positive and negative errors cancel each other out, which is not the case when squared.
+
+The *mean squared error* would be in a different unit then the data (squared!), which is why we usually take the square root of that value to bring it back to the original unit: This leaves us with the *root mean squared error (RMSE)*!
+
+## A Slightly More Complex Model
+
+Obviously, the model for predicting height from the average is not very good: It predicts the same height for all children! (The RMSE is 27 cm!)
+
+How can we improve this model?
+
+. . .
+
+We can account for other information that we might have!\
+For example, to account for age might be a good idea: Older children are likely taller than younger ones. We plot height against age to visually inspect the relationship:
+
+```{r}
+#| echo: false
+
+p1 <- NHANES_child %>% 
+  ggplot(aes(x = Age, y = Height)) +
+  geom_point(position = "jitter",size=0.05) +
+  scale_x_continuous(breaks = seq.int(0, 20, 2)) +
+  ggtitle('A: original data')
+
+lmResultHeightOnly <- lm(Height ~ Age + 0, data=NHANES_child)
+rmse_heightOnly <- sqrt(mean(lmResultHeightOnly$residuals**2))
+
+p2 <- NHANES_child %>% 
+  ggplot(aes(x = Age, y = Height)) +
+  geom_point(position = "jitter",size=0.05) +
+  scale_x_continuous(breaks = seq.int(0, 20, 2)) + 
+  annotate('segment',x=0,xend=max(NHANES_child$Age),
+           y=0,yend=max(lmResultHeightOnly$fitted.values),
+           color='blue',lwd=1) + 
+  ggtitle('B: age')
+
+p3 <- NHANES_child %>% 
+  ggplot(aes(x = Age, y = Height)) +
+  geom_point(position = "jitter",size=0.05) +
+  scale_x_continuous(breaks = seq.int(0, 20, 2)) + 
+  geom_smooth(method='lm',se=FALSE) + 
+  ggtitle('C: age + constant')
+
+p4 <- NHANES_child %>% 
+  ggplot(aes(x = Age, y = Height)) +
+  geom_point(aes(colour = factor(Gender)), 
+             position = "jitter", 
+             alpha = 0.8,
+             size=0.05) +
+  geom_smooth(method='lm',aes(group = factor(Gender), 
+                              colour = factor(Gender))) + 
+  theme(legend.position = c(0.25,0.8)) + 
+  ggtitle('D: age + constant + gender')
+
+plot_grid(p1,p2,p3,p4,ncol=2)
+
+```
+
+::: notes
+RMSE: On average, 27 cm "wrong" per individual!
+
+A: raw data, visible strong relationship\
+B: only age (linear relationship)\
+C: intercept/constant\
+D: also account for gender
+
+\--\> line fits data increasingly better!
+:::
+
+## A Slightly More Complex Model 2
+
+As we can see, the line (\~ model) fits the data points increasingly well, e.g. if we include a constant (or intercept) and age. We would write this as this formula:
+
+$$
+\hat{y_i} = \hat{\beta_0} + \hat{\beta_1} * age_i
+$$
+
+Remember from linear algebra that this defines a line:
+
+$$
+y = slope * x + intercept
+$$
+
+Thus $\beta_0$ is the parameter for the intercept and $\beta_1$ for the slope of age!
+
+The model fit is now much better: RMSE = 8.36 cm.
+
+. . .
+
+Adding age? Does not improve model too much!
+
+::: notes
+w/o intercept: A, no $\beta_0$
+
+Stats Software will estimate best values for $\beta$'s
+:::
+
+## What is a "Good" Model?
+
+Two aims:
+
+1.  Describe data well (= low error/RMSE)
+
+2.  Generalize to new data (low error when applied to new data)
+
+Can be conflicting!
+
+. . .
+
+Where does error come from?
+
+::: incremental
+-   wrong model specification
+
+    -   e.g. height goes *down* with age
+
+    -   important variable is missing from model (age!)
+
+-   measurement error (noise): random variation in data
+
+    -   actual measurement is biased (broken device, bias etc.)
+
+    -   "thing measured" may be biased/varies a lot
+:::
+
+## Examples Measurement Error
+
+```{r BACrt,echo=FALSE,message=FALSE, fig.cap="Simulated relationship between blood alcohol content and reaction time on a driving test, with best-fitting linear model represented by the line. A: linear relationship with low measurement error.  B: linear relationship with higher measurement error.  C: Nonlinear relationship with low measurement error and (incorrect) linear model"}
+
+dataDf <-  
+  tibble(
+    BAC = runif(100) * 0.3,
+    ReactionTime = BAC * 1 + 1 + rnorm(100) * 0.01
+  )
+
+p1 <- dataDf %>% 
+  ggplot(aes(x = BAC, y = ReactionTime)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  ggtitle('A: linear, low noise')
+# noisy version
+dataDf <-  
+  tibble(
+    BAC = runif(100) * 0.3,
+    ReactionTime = BAC * 2 + 1 + rnorm(100) * 0.2
+  )
+p2 <- dataDf %>% 
+  ggplot(aes(x = BAC, y = ReactionTime)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  ggtitle('B: linear, high noise')
+# nonlinear (inverted-U) function
+dataDf <-
+  dataDf %>% 
+  mutate(
+    caffeineLevel = runif(100) * 10,
+    caffeineLevelInvertedU = (caffeineLevel - mean(caffeineLevel))**2,
+    testPerformance = -1 * caffeineLevelInvertedU + rnorm(100) * 0.5
+  )
+p3 <- dataDf %>% 
+  ggplot(aes(x = caffeineLevel, y = testPerformance)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  ggtitle('C: nonlinear')
+plot_grid(p1,p2,p3)
+```
+
+::: notes
+A: very little error, all points close to fitted line\
+B: same relationship much more variability across individuals\
+C. wrongly specified model (caffeine!), not a linear relationship. Error high (deviations points - line)
+:::
+
+## Can a Model be too Good?
+
+Yes! This is called overfitting.
+
+. . .
+
+If we fit a line too closely to the data, the model might not be able to generalize to other data well.
+
+```{r Overfitting,echo=FALSE,message=FALSE,warning=FALSE, fig.cap='An example of overfitting. Both datasets were generated using the same model, with different random noise added to generate each set.  The left panel shows the data used to fit the model, with a simple linear fit in blue and a complex (8th order polynomial) fit in red.  The root mean square error (RMSE) values for each model are shown in the figure; in this case, the complex model has a lower RMSE than the simple model.  The right panel shows the second dataset, with the same model overlaid on it and the RMSE values computed using the model obtained from the first dataset.  Here we see that the simpler model actually fits the new dataset better than the more complex model, which was overfitted to the first dataset.',fig.width=8,fig.height=4,out.height='50%'}
+
+#parameters for simulation
+set.seed(1122)
+sampleSize <- 16
+#build a dataframe of simulated data
+simData <- 
+  tibble(
+    X = rnorm(sampleSize),
+    Y = X + rnorm(sampleSize, sd = 1),
+    Ynew = X + rnorm(sampleSize, sd = 1)
+  )
+#fit models to these data
+simpleModel <- lm(Y ~ X, data = simData)
+complexModel <- lm(Y ~ poly(X, 8), data = simData)
+#calculate root mean squared error for "current" dataset
+rmse_simple <- sqrt(mean(simpleModel$residuals**2))
+rmse_complex <- sqrt(mean(complexModel$residuals**2))
+#calculate root mean squared error for "new" dataset
+rmse_prediction_simple <- sqrt(mean((simpleModel$fitted.values - simData$Ynew)**2))
+rmse_prediction_complex <- sqrt(mean((complexModel$fitted.values - simData$Ynew)**2))
+#visualize
+plot_original_data <- 
+  simData %>% 
+  ggplot(aes(X, Y)) +
+  geom_point() +
+  geom_smooth(
+    method = "lm", 
+    formula = y ~ poly(x, 8), 
+    color = "red", 
+    se = FALSE
+  ) +
+  geom_smooth(
+    method = "lm", 
+    color = "blue", 
+    se = FALSE
+  ) +
+  ylim(-3, 3) +
+  annotate(
+    "text",
+    x = -1.25, 
+    y = 2.5, 
+    label = sprintf("RMSE=%0.1f", rmse_simple),
+    color = "blue", 
+    hjust = 0, 
+    cex = 4
+  ) +
+  annotate(
+    "text",
+    x = -1.25, 
+    y = 2, 
+    label = sprintf("RMSE=%0.1f", rmse_complex),
+    color = "red", 
+    hjust = 0, 
+    cex = 4
+  ) +
+  ggtitle("original data") 
+plot_new_data  <- 
+  simData %>% 
+  ggplot(aes(X, Ynew)) +
+  geom_point() +
+  geom_smooth(
+    aes(X, Y), 
+    method = "lm", 
+    formula = y ~ poly(x, 8), 
+    color = "red", 
+    se = FALSE
+  ) +
+  geom_smooth(
+    aes(X, Y), 
+    method = "lm", 
+    color = "blue", 
+    se = FALSE
+  ) +
+  ylim(-3, 3) +
+  annotate(
+    "text",
+    x = -1.25, 
+    y = 2.5, 
+    label = sprintf("RMSE=%0.1f", rmse_prediction_simple),
+    color = "blue", 
+    hjust = 0, 
+    cex = 4
+  ) +
+  annotate(
+    "text",
+    x = -1.25, 
+    y = 2, 
+    label = sprintf("RMSE=%0.1f", rmse_prediction_complex),
+    color = "red", 
+    hjust = 0, 
+    cex = 4
+  ) +
+  ggtitle("new data") 
+plot_grid(plot_original_data, plot_new_data)
+```
+
+::: notes
+same formula, different noise (simulation) \~ different individuals
+
+simpler model fits new data better!
+:::
+
+## What is a Linear Model? {.scrollable}
+
+You might have learned about t-Tests, ANOVAs, Regression, Correlation etc.
+
+BUT: [![All models can be thought of as linear models](images/linear_tests_cheat_sheet.png){alt="All models can be thought of as linear models"}](https://lindeloev.github.io/tests-as-linear/)
+
+# Summarizing Data
+
+## Central Tendency
+
+Why summarize data?
+
+. . .
+
+It's a model & describes the data! E.g. the mean = central tendency of the data
+
+. . .
+
+Mean, Median, Mode?
+
+. . .
+
+**Mean** = minimizes sum of squared error, but highly influenced by outliers!\
+**Median** = "middle" value if ranked, minimizes sum of absolute error, less influenced by extreme values\
+**Mode** = most often occurring value
+
+## Variability
+
+How widespread are the data?
+
+. . .
+
+**Variance** and **Standard Deviation**
+
+Variance = Mean Squared Error
+
+$$
+\sigma^2 = \frac{SSE}{N} = \frac{\sum_{i=1}^n (x_i - \mu)^2}{N}
+$$
+
+(Note: $x_i$ = value of ind. observation, $\mu$ = *population* mean instead of $\hat{X}$ = *sample* mean)
+
+. . .
+
+Standard Deviation = Root Mean Squared Error
+
+$$
+SD = \sigma = \sqrt{\sigma^2}
+$$
+
+. . .
+
+We usually don't know the population mean $\mu$, thats why we estimate the sample variance (with the "hat"):
+
+$$
+\hat\sigma^2 = \frac{\sum_{i=1}^n (x_i - \hat{X})^2}{n-1}
+$$
+
+Note: we now use $\hat{X}$ and $n$ for the *sample* size. $n-1$ is used to make the estimate more robust/less biased.
+
+::: notes
+Remember plot above: Points either close to line or wide spread
+
+Variance = sigma\^2, deviations of data points from mean ($\mu$) squared and summed, divided by number of oberservations
+
+$n-1$ = Degrees of Freedom, one value is fixed if we know the mean.
+:::
+
+## Z-Scores
+
+$$
+Z(x) = \frac{x - \mu}{\sigma}
+$$
+
+::: incremental
+-   standardizes the distribution: How far is any data point from the mean in units of SD?
+-   doesn't change original relationship of data points!
+    -   shifts distribution to have a mean = 0 and SD = 1.
+-   useful if we compare (or use in a model) variables on different scales/units!
+:::
+
+. . .
+
+```{r zDensityCDF,echo=FALSE,fig.cap="Density (top) and cumulative distribution (bottom) of a standard normal distribution, with cutoffs at one standard deviation above/below the mean."}
+
+# First, create a function to generate plots of the density and CDF
+dnormfun <- function(x) {
+  return(dnorm(x, 248))
+}
+plot_density_and_cdf <- 
+  function(zcut, zmin = -4, zmax = 4, plot_cdf = TRUE, zmean = 0, zsd = 1) {
+    zmin <- zmin * zsd + zmean
+    zmax <- zmax * zsd + zmean
+    x <- seq(zmin, zmax, 0.1 * zsd)
+    zdist <- dnorm(x, mean = zmean, sd = zsd)
+    area <- pnorm(zcut) - pnorm(-zcut)
+    
+    p2 <- 
+      tibble(
+        zdist = zdist, 
+        x = x
+      ) %>% 
+      ggplot(aes(x, zdist)) +
+      geom_line(
+        aes(x, zdist), 
+        color = "red", 
+        size = 2
+      ) +
+      stat_function(
+        fun = dnorm, args = list(mean = zmean, sd = zsd),
+        xlim = c(zmean - zcut * zsd, zmean + zsd * zcut),
+        geom = "area", fill = "orange"
+      ) +
+      stat_function(
+        fun = dnorm, args = list(mean = zmean, sd = zsd),
+        xlim = c(zmin, zmean - zcut * zsd),
+        geom = "area", fill = "green"
+      ) +
+      stat_function(
+        fun = dnorm, args = list(mean = zmean, sd = zsd),
+        xlim = c(zmean + zcut * zsd, zmax),
+        geom = "area", fill = "green"
+      ) +
+      annotate(
+        "text",
+        x = zmean,
+        y = dnorm(zmean, mean = zmean, sd = zsd) / 2,
+        label = sprintf("%0.1f%%", area * 100)
+      ) +
+      annotate(
+        "text",
+        x = zmean - zsd * zcut - 0.5 * zsd,
+        y = dnorm(zmean - zcut * zsd, mean = zmean, sd = zsd) + 0.01 / zsd,
+        label = sprintf("%0.1f%%", pnorm(zmean - zsd * zcut, mean = zmean, sd = zsd) * 100)
+      ) +
+      annotate(
+        "text",
+        x = zmean + zsd * zcut + 0.5 * zsd,
+        y = dnorm(zmean - zcut * zsd, mean = zmean, sd = zsd) + 0.01 / zsd,
+        label = sprintf("%0.1f%%", (1 - pnorm(zmean + zsd * zcut, mean = zmean, sd = zsd)) * 100)
+      ) +
+      xlim(zmin, zmax) +
+      labs(
+        x = "Z score",
+        y = "density"
+      )
+    
+    if (plot_cdf) {
+      cdf2 <- 
+        tibble(
+          zdist = zdist, 
+          x = x, 
+          zcdf = pnorm(x, mean = zmean, sd = zsd)
+        ) %>% 
+        ggplot(aes(x, zcdf)) +
+        geom_line() +
+        annotate(
+          "segment",
+          x = zmin, 
+          xend = zmean + zsd * zcut,
+          y = pnorm(zmean + zsd * zcut, mean = zmean, sd = zsd),
+          yend = pnorm(zmean + zsd * zcut, mean = zmean, sd = zsd),
+          color = "red", 
+          linetype = "dashed"
+        ) +
+        annotate(
+          "segment",
+          x = zmean + zsd * zcut, 
+          xend = zmean + zsd * zcut,
+          y = 0, yend = pnorm(zmean + zsd * zcut, mean = zmean, sd = zsd),
+          color = "red", 
+          linetype = "dashed"
+        ) +
+        annotate(
+          "segment",
+          x = zmin, 
+          xend = zmean - zcut * zsd,
+          y = pnorm(zmean - zcut * zsd, mean = zmean, sd = zsd),
+          yend = pnorm(zmean - zcut * zsd, mean = zmean, sd = zsd),
+          color = "blue", 
+          linetype = "dashed"
+        ) +
+        annotate(
+          "segment",
+          x = zmean - zcut * zsd, 
+          xend = zmean - zcut * zsd,
+          y = 0, 
+          yend = pnorm(zmean - zcut * zsd, mean = zmean, sd = zsd),
+          color = "blue", 
+          linetype = "dashed"
+        ) +
+        ylab("Cumulative density")
+      
+      plot_grid(p2, cdf2, nrow = 2)
+    } else {
+      print(p2)
+    }
+  }
+plot_density_and_cdf(1, plot_cdf = FALSE)
+```
+
+::: notes
+Z of x
+
+x is single value/data point\
+mu, sigma
+
+z-scores directly comparable
+:::
+
+# Probability
+
+Probability theory: branch of mathematics that deals with chance and uncertainty.
+
+. . .
+
+So far, we have summarized samples of data, but how do we draw inferences about the population? Is the mean of a sample equal to the mean of the population?
+
+\--\> to draw inferences (i.e. get reasonable estimates for the population), we need probability theory!
+
+. . .
+
+Probability = likelihood of some event (range from 0 - impossible to 1 - certain)
+
+(can be translated to percentages: \* 100)
+
+## Probability Theory
+
+Definitions:
+
+-   **Experiment**: Activity that produces outcome (e.g. roll a die)
+
+-   **Sample space**: Set of possible outcomes for an experment (six-sided die: {1,2,3,4,5,6})
+
+-   **Event**: Subset of the sample space, an outcome
+
+## Probability Theory 2
+
+Let's say we have a variable $X$ that contains $N$ independent events:
+
+$$
+X = E_1, E_2, …, E_n$
+$$
+
+The probability of a certain event (event $i$) is then:
+
+$$
+P(X = E_i) $$
+
+. . .
+
+Formal features of probabilit theory:
+
+::: incremental
+-   Probability can't be negative.
+
+-   The total probability of outcomes in the sample space is 1.
+
+-   The probability of any individual event can't be greater than 1.
+:::
+
+## Determine Probabilities
+
+::: incremental
+-   Personal belief (not very scientific!)
+
+-   Empirical frequency
+
+    -   Law of large numbers
+
+-   Classical probability
+:::
+
+::: notes
+personal belief: What would have been? Which vaccination is best (opinion)
+
+empirical: count events from the past, divide by possible events (rain days from all days)\
+--\> which year(s)? The more data, the better
+
+classical:
+:::
+
+## Classical Probability
+
+Rules of probability
+
+1.  *Subtraction*: Probability of some event (A) not happening = 1- probability that it happens:
+    -   $P(\neg A) = 1 - P(A)$
+2.  *Intersection*: The probability of a conjoint event/that [both]{.underline} A and B will occur ($\cap$):
+    -   $P(A \cap B) = P(A) * P(B)$ (if A and B are *independent*!!)
+3.  *Addition*: Probability of [either]{.underline} of two events occurring ($\cup$):
+    -   $p(A \cup B) = P(A) + P(B) - P(A \cap B)$
+
+    -   We add both but subtract the intersection, prevents us from counting occurrence twice!
+
+::: notes
+$\neg A$ = "not A", derives from Axions above: Sum must be 1
+
+$\cap$ = or; $\cup$ = and
+:::
+
+## Classical Probability 2
+
+![Each cell in this matrix represents an outcome of throws of two dice (rows = one die, columns = other die). Cells in red represent the cells with a six.](W2_Probability_files/ThrowMatrix-1.png){width="510"}
+
+::: notes
+For example, go to book
+
+Probability is important for statistics, so it is necessary to go through the rules once
+
+\--\> necessary to draw inferences from data! How representative are data for population?
+:::
+
+## Probability Distributions
+
+**Probability distribution** = probability of all possible outcomes in an experiment.
+
+. . .
+
+Helps us answer questions like: How likely is it that event X occurs/we find specific value of X?
+
+. . .
+
+**Cumulative Probability Distribution**
+
+\--\> how likely is it to find a value that is as extreme or larger (or as small or smaller!)?
+
+## Conditional Probability
+
+How likely is an event given that another event has occurred?
+
+$$
+P(A|B) = \frac{P(A \cap B)}{P(B)}
+$$
+
+"The conditional probability of A given B is the joint probability divided by the overall probability of B".
+
+::: notes
+How likely is it that you pass the class if you have taken the course?
+
+Probability that both things are true given that the one being conditioned upon is true
+:::
+
+## Independence
+
+Knowing the value of one variable doesn't tell us anything about the value of the other:
+
+$$
+P(A|B) = P(A)
+$$
+
+But if the
