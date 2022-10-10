@@ -1,0 +1,38 @@
+---
+title: "Dat Wrangling"
+subtitle: "Biostatistics"
+author: "Dr. Lea Hildebrandt"
+format: 
+  revealjs:
+    smaller: true
+    scrollable: true
+    slide-number: true
+    theme: serif
+    chalkboard: true
+editor: visual
+from: markdown+emoji
+---
+
+## Data Wrangling?
+
+"Preparation" of the data for analysis: cleaning up variables (outliers, erroneous values, recoding...), changing the structure/format of data frames, merging data sets, calculating new variables, reducing/summarizing variables...
+
+. . .
+
+You will spend a lot more time wrangling the data than analyzing it!
+
+. . .
+
+You could do this manually (e.g. in Excel), but this is tedious, error prone & not reproducible! (+ Datasets can be huge!)
+
+. . .
+
+Fortunately, it is easy to do in R
+
+## Tidyverse
+
+You can do all data wrangling in Base R, i.e. without loading any packages. However, there's a neat collection of packages called tidyverse, which makes data wrangling even easier!
+
+. . .
+
+Be aware, though, that coding in the tidyverse style is very different than in Base R!

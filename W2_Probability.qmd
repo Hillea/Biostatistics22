@@ -4,6 +4,8 @@ subtitle: "Biostatistics"
 author: "Dr. Lea Hildebrandt"
 format: 
   revealjs:
+    smaller: true
+    scrollable: true
     slide-number: true
     theme: serif
     chalkboard: true
@@ -675,7 +677,7 @@ P(X = E_i) $$
 
 . . .
 
-Formal features of probabilit theory:
+Formal features of probability theory:
 
 ::: incremental
 -   Probability can't be negative.
@@ -727,7 +729,7 @@ $\cap$ = or; $\cup$ = and
 
 ## Classical Probability 2
 
-![Each cell in this matrix represents an outcome of throws of two dice (rows = one die, columns = other die). Cells in red represent the cells with a six.](W2_Probability_files/ThrowMatrix-1.png){width="510"}
+![Each cell in this matrix represents an outcome of throws of two dice (rows = one die, columns = other die). Cells in red represent the cells with a six.](images/ThrowMatrix-1.png)
 
 ::: notes
 For example, go to book
@@ -755,9 +757,7 @@ Helps us answer questions like: How likely is it that event X occurs/we find spe
 
 How likely is an event given that another event has occurred?
 
-$$
-P(A|B) = \frac{P(A \cap B)}{P(B)}
-$$
+$$P(A|B) = \frac{P(A \cap B)}{P(B)}$$
 
 "The conditional probability of A given B is the joint probability divided by the overall probability of B".
 
@@ -771,8 +771,102 @@ Probability that both things are true given that the one being conditioned upon 
 
 Knowing the value of one variable doesn't tell us anything about the value of the other:
 
+$$P(A|B) = P(A)$$
+
+But if the two variables are dependent, the conditional probability will differ from the overall probability (of A, in this case).
+
+::: notes
+Comparing conditional and overall prob might be helpful to determine whether variables are independent.
+
+Ex: physical activity and mental health.
+
+Use conditional probability in most cases!
+:::
+
+## Bayes' Rule
+
+Often we know $P(A|B)$ but really want to know $P(B|A)$!
+
+Example: We know the probability of having a positive Covid test when we actually have Covid, $P(positive|Covid)$. But what we often want to know is the probability of having Covid once we tested positive, $P(Covid|positive)$.
+
+. . .
+
+This reversed conditional probability can be calculated using Bayes' Rule:
+
+$$P(B|A) = \frac{P(A|B) * P(B)}{P(A)}$$\
+. . .
+
+If we have two outcomes, we can simplify using:
+
+$$P(A) = P(A|B) * P(B) + P(A|\neg B)*P(\neg B)$$
+
+Updated Bayes' Rule:
+
+$$P(B|A) = \frac{P(A|B)*P(B)}{P(A|B)*P(B) + P(A|\neg B)*P(\neg B)}$$
+
+## Bayes' Rule 2
+
+Example: Let's try to find out:
+
+$$P(Covid|positive) = \frac{P(positive|Covid) * P(Covid)}{P(positive)}$$
+
+Covid tests can't be 100% correct, there are always false positives and false negatives. But let's say the accuracy of the test is 95%. This is actually the *sensitivity* of the test: $P(positive|Covid)$.
+
+(The counterpart is the specificity of the test: $P(negative|healthy)$, which is around 75% for most PCR tests.)
+
+. . .
+
+We'd also need the prevalence of Covid, $P(Covid)$, which is (let's say) 10%.
+
+Finally, we plug in $P(pos|Covid) * P(Covid) + P(pos|healthy) * P(healthy)$ for $P(positive)$. So that would be
+
+$$P(positive) = .95 * .1 + (1-.95) * (1-.1) = .14$$
+
+Bringing it together, we get:
+
+$$P(Covid|positive) = \frac{.95 * .1}{.14} = .679$$
+
+If we test positive, we'd thus are actually infected with a probability of 67,9%!
+
+## Learning from Data
+
+The terms in Bayes' Rule have some specific names:
+
+The prevalence $P(Covid)$ in our example is also called the *prior probability* (before we have any further information, e.g. the test result).
+
+After we collected data (= test result), we have the *likelihood*: $P(positive|Covid)$, which is the sensitivity of the test.
+
+$P(A)$ is the *marginal likelhood* (overall likelihood of the data/pos. test outcome across infected and healthy individuals).
+
+Finally, $P(Covid|test)$ is the *posterior probability* (after accounting for the data).
+
+::: notes
 $$
-P(A|B) = P(A)
+P(B|A) = \frac{P(A|B)}{P(A)} * P(B)
 $$
 
-But if the
+$P(A|B)/P(A)$ = how likely the data are given B relative to overall marginal likelihood (how likely a pos rest if Covid relative to how likely it is to have a pos. test in general)
+
+$P(B)$ = how likely we thought it was to have Covid before we knew the test result
+:::
+
+## Sum Up
+
+Models and probability are central to statistics, as we will see.
+
+There are two intepretations of probability: **Frequentist** and **Bayesian**. \
+Frequentists interpret probability as the long-run frequencies (e.g. how many people end up getting Covid).
+
+Bayesians interpret probability as a degree of belief. How likely is it to catch Covid if you o out now? Based on beliefs and knowledge.
+
+::: notes
+Freq: Difficult to wrap ones' head around if an event occurs only once.
+
+Bayes: Bit more subjective
+:::
+
+## Thanks
+
+This week: R session on Data Wrangling.
+
+Net week: Sampling.
