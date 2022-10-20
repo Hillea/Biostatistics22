@@ -1,8 +1,13 @@
 ---
 title: "Intro to R"
+subtitle: |
+   | Biostatistics 
+   | Translational Neuroscience
 author: "Dr. Lea Hildebrandt"
 format: 
   revealjs:
+    smaller: true
+    scrollable: true
     slide-number: true
     theme: serif
     chalkboard: true
@@ -10,12 +15,18 @@ editor: visual
 from: markdown+emoji
 ---
 
+# R!
+
+::: notes
+start recording
+:::
+
 ## Why write code?
 
 ::: {.incremental .smaller}
 -   Doing statistical calculation by hand? Tedious & error prone! Computer is faster...
 
--   Using spreadsheets? Limited options, change data accidentaly...
+-   Using spreadsheets? Limited options, change data accidentally...
 
 -   Using point-and-click software (e.g. SPSS)?
 
@@ -28,13 +39,21 @@ from: markdown+emoji
 -   You'll learn to program!
 :::
 
+::: notes
+Chat: What are advantages (or disadvantages!) of coding?
+:::
+
 ## Install R & RStudio
 
 You should all have installed both by now! Who had problems doing so?
 
 ## Overview RStudio
 
-![RStudio Interface](W1b_IntroR_files/rstudio.png){fig-alt="Screenshot of the RStudio Interface with different panes visible"}
+![RStudio Interface](images/rstudio.png){fig-alt="Screenshot of the RStudio Interface with different panes visible"}
+
+::: notes
+open R!
+:::
 
 ## RStudio Panes
 
@@ -53,7 +72,7 @@ You should all have installed both by now! Who had problems doing so?
 :::
 
 ::: {.column width="50%"}
-![RStudio Interface](W1b_IntroR_files/rstudio2.png)
+![RStudio Interface](images/rstudio2.png)
 :::
 :::
 
@@ -73,7 +92,13 @@ Console vs. Script (Rmarkdown later)
 sqrt(9)
 ```
 
-![Console used as calculator](W1b_IntroR_files/Console.jpg){fig-alt="Calculated 100+1, 2*3, square root of 9 directly in the console"}
+![Console used as calculator](images/Console.jpg){fig-alt="Calculated 100+1, 2*3, square root of 9 directly in the console"}
+
+::: notes
+try it out!
+
+We can't really do much with these values, they will just be written in the console.
+:::
 
 ## Saving the Results as a Variable/Object
 
@@ -92,11 +117,11 @@ word <- "Hello"
 ::: {.incremental .smaller}
 -   "\<-" is used to assign values to variables ("=" is also possible but not preferred)
 
--   a, multi etc. are the variable names, which can be words, no whitespace allowed
+-   `a`, `multi` etc. are the variable names, which can be words, no whitespace allowed
 
     -   You can find those now in your Environment!
 
--   As you can see, the variables can contain different types: Numbers, strings/characters (= words) etc.
+-   as you can see, the variables can contain different types: Numbers, strings/characters (= words) etc.
 
 -   no output in console!
 
@@ -106,27 +131,45 @@ word <- "Hello"
 :::
 
 ::: notes
+Type first command in console, what happens?
+
 Why don't we see anything in the console?\
-What happens if we type in a in the console?
+What happens if we type in `a` in the console?
+
+Is there anything else that you find interesting?
 
 What is sqrt()?
 :::
 
+## Working Directory
+
+::: incremental
+It makes sense to save all your scripts etc. in a folder specifically dedicated to this course.
+
+-   Make sure that R knows that you want to work in this folder, i.e. set your working directory:
+
+    -   **Session -\> Set Working Directory -\> Choose Directory**
+
+-   **Assignment**: Please make a folder, e.g. called "Biostatistics" (but not "R" or anything with spaces in it). Then set your working directory to this folder.
+:::
+
 ## Scripts
 
-::: smaller
 If you type in all your commands/code in the console, it might get lost/you might not remember what you did, and you always have to type it in again if you want to run it again with slight changes. Also, the code in the console is not save-able.
 
 Therefore, it is better practice to write scripts. Scripts are basically text files that contain your code.
 
+. . .
+
 To open a new script, click **File -\> New File -\> R Script.**
 
 To run a line of the script, you can either click Run at the top right of the pane or press `ctrl + enter`. It will always run the line where the cursor is located (or the lines that you have selected with the mouse). To run the whole script, press `ctrl + shift + enter`.
-:::
 
 ## Scripts 2
 
-**Assignment**: In this file, write down some of the code (one command per line) that we have used so far and save the file. Write a comment (starting with #) at the end of each line that describes what is done in that line.\
+**Assignment**: Open a new file. In this file, write down some of the code (one command per line) that we have used so far and save the file.
+
+Now run the code (either by pressing "run" at the top right of the script or `ctrl + enter`).
 
 ## Functions
 
@@ -142,6 +185,10 @@ If you want to know what a function does, which arguments it takes, or which out
 
 This will open the help file in the Help Pane on the lower right of RStudio.
 
+::: notes
+Do this now! Anything unclear?
+:::
+
 ## Functions 2
 
 Functions often take more than one argument:
@@ -151,11 +198,11 @@ Functions often take more than one argument:
 #| eval: false
 rnorm(n = 6, mean = 3, sd = 1)
 # rnorm(6, 3, 1)
+
+# By the way, # denotes a comment (ignored by R), which can be helpful for scripting!
 ```
 
 You can explicitly state which argument you are handing over (check the help file for the argument names!) or just state the values (but these have to be in the correct order then! See help file).
-
-By the way, `#` denotes a comment (ignored by R), which can be helpful for scripting!
 
 ## Packages
 
@@ -189,29 +236,25 @@ Base R = mobile phone, comes with some functions, packages = apps
 possibly necessary to install Rtools!
 :::
 
-## Working Directory
-
-::: incremental
-It makes sense to save all your scripts etc. in a folder specifically dedicated to this course.
-
--   Make sure that R knows that you want to work in this folder, i.e. set your working directory:
-
-    -   **Session -\> Set Working Directory -\> Choose Directory**
-
--   **Assignment**: Please make a folder, e.g. called "Biostatistics" (but not "R" or anything with spaces in it)
-:::
-
 ## R Markdown
 
 R scripts are a good way to save your code. However, you'd better heavily comment in your scripts, so that future you (and potentially collaborators) know what happens in your script.
 
-An alternative is an *R Markdown file*. This is also a sort of script, but you can write text (like in a word processor) and mix it with code chunks, where you can write your R code. R Markdown is the "language" you use to write in these files, which is a variety of Markdown.
+An alternative is an **R Markdown file**. This is also a sort of script, but you can write text (like in a word processor) and mix it with code chunks, where you can write your R code. R Markdown is the "language" you use to write in these files, which is a variety of Markdown.
 
 The advantage of R Markdown files (ending with .Rmd) is that they increase reproducibility. For example, you can write whole reports in R Markdown (and also these slides are made with it!).
 
 A newer variant is called *quarto*, which works very similar (but is more flexible) to R Markdown.
 
 ## R Markdown 2
+
+![R script](images/Rscript.jpg)
+
+![R Markdown](images/Rmd.jpg)
+
+![R Markdown rendered as html report](images/rmdrendered.jpg){width="400"}
+
+## R Markdown 3
 
 ::: incremental
 **Assignment**:
@@ -220,7 +263,7 @@ A newer variant is called *quarto*, which works very similar (but is more flexib
 
 -   Check out the content of it.
 
--   Delete and add some of the text on the white background. Change the Header (indicated by ##) to "About me" and write something about you underneath.
+-   Delete and add some of the text on the white background. Change the Header (indicated by ##) to "About me" and write something about yourself underneath.
 
 -   Switch between "Source" and "Visual" in the top left. What changes? What is "Visual"?
 
@@ -237,9 +280,11 @@ A newer variant is called *quarto*, which works very similar (but is more flexib
 -   insert inline code
 :::
 
-## R Markdown 3
+## R Markdown 4
 
 There are many useful things you can so with R Markdown: Adding different headers, adding inline code, knitting as a PDF, adding pictures or tables...You can also decide whether the code chunks should be visible in the output etc.
+
+**You will need R Markdown for your report!**
 
 For further information, check out the R Markdown cheatsheet: <https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf>
 
@@ -259,11 +304,13 @@ Delete the text/code in the .Rmd document you just worked on (or add a new heade
 #| echo: true
 #| eval: false
 
-library(tidyverse) # we will use a function from the tidyverse to read in the data
+# library(tidyverse) # we will use a function from the tidyverse to read in the data
 
 dat <- read_csv("ahi-cesd.csv")
 pinfo <- read_csv("participant-info.csv")
 ```
+
+Run the code chunk!
 
 ## Looking at the Data
 

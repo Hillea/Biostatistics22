@@ -1,0 +1,416 @@
+---
+title: "Sampling"
+subtitle: "Biostatistics"
+author: "Dr. Lea Hildebrandt"
+format: 
+  revealjs:
+    smaller: true
+    scrollable: true
+    slide-number: true
+    theme: serif
+    chalkboard: true
+editor: visual
+from: markdown+emoji
+---
+
+## Sampling
+
+We have already mentioned the difference between the whole **population** and our **sample**. To be able to draw inferences from a relatively small sample to a population is one of the core ideas of statistics.
+
+. . .
+
+Why do we sample?
+
+::: incremental
+-   Time: It's often impossible to measure whole population.
+
+-   A subset (sample) might be sufficient to estimate a value of interest.
+:::
+
+::: notes
+Usually, we can't measure the whole population. In some cases (e.g. rare diseases) it might in principle be possible. In this case, we usually don't need (inferential) statistics because we can simply describe the population with descriptive statistics. Inferential stats allow us to estimate values and their uncertainty!
+:::
+
+## How Do We Sample?
+
+The sample needs to be *representative* of the entire population, that's why it's critical how we select the individuals.
+
+Think about examples of *non-representative* samples!
+
+. . .
+
+***Representative***: Every member of the population has an equal chance of being selected.
+
+If non-representative: sample statistic is *biased*, its value is different from the true population value (*parameter*). (But usually we of course don't know the population parameter! Otherwise we wouldn't need to sample.)
+
+::: notes
+*Non-representative:* pollster calls people from list of Democratic party, or from rich neighborhood, or only uses psychology students :D
+:::
+
+## Different Ways of Sampling
+
+-   **with replacement**: After a member of the population has been sampled, they are put back into the pool and could potentially be sampled again.
+
+-   **without replacement**: Once a member of the population is sampled, they are not eligible to be sampled again. This is the most common variant of sampling.
+
+## Sampling Error
+
+It is likely that our sample statistic differs slightly from the population parameter. This is called the **sampling error**.
+
+If we collect multiple samples, the sample statistic will always differ slightly. If we combine all those sample statistics, we get the **sampling distribution**.
+
+Of course, we want to minimize the sampling error and get a good estimate of the population parameter!
+
+## Example Sampling Distribution
+
+Let's use the NHANES dataset again and let's assume it is the entire population. We can calculate the mean ($\mu = 168.35$) and standard deviation ($\sigma = 10.16$) as the population parameters. If we repeatedly sample 50 individuals, we get this:
+
+::: {.columns .incremental}
+::: {.column width="60%"}
+```{r}
+#| echo: false
+# load the NHANES data library
+library(NHANES)
+library(tidyverse)
+
+# create a NHANES dataset without duplicated IDs 
+NHANES <-
+  NHANES %>%
+  distinct(ID, .keep_all = TRUE) 
+#create a dataset of only adults
+NHANES_adult <- 
+  NHANES %>%
+  filter( 
+    !is.na(Height), 
+    Age >= 18
+  )
+
+sample_df <- data.frame(sampnum=seq(5), sampleMean=0, sampleSD=0)
+for (i in 1:5){
+  exampleSample <- 
+    NHANES_adult %>% 
+    sample_n(50) %>%
+    pull(Height)
+  sample_df$sampleMean[i] <- mean(exampleSample)
+  sample_df$sampleSD[i] <- sd(exampleSample)
+}
+sample_df <- sample_df %>%
+  dplyr::select(-sampnum)
+
+knitr::kable(sample_df)
+```
+:::
+
+::: {.column width="40%"}
+```{r}
+#| echo: false
+
+sampSize <- 50 # size of sample
+nsamps <- 5000 # number of samples we will take
+# set up variable to store all of the results
+sampMeans <- array(NA, nsamps)
+# Loop through and repeatedly sample and compute the mean
+for (i in 1:nsamps) {
+  NHANES_sample <- sample_n(NHANES_adult, sampSize)
+  sampMeans[i] <- mean(NHANES_sample$Height)
+}
+sampMeans_df <- tibble(sampMeans = sampMeans)
+
+sampMeans_df %>% 
+  ggplot(aes(sampMeans)) +
+  geom_histogram(
+    data = NHANES_adult, 
+    aes(Height, ..density..),
+    bins = 100, col = "gray", fill = "gray"
+  ) +
+  geom_histogram(
+    aes(y = ..density.. * 0.2),
+    bins = 100,
+    col = "blue", fill = "blue"
+  ) +
+  geom_vline(xintercept = mean(NHANES_adult$Height)) +
+  annotate(
+    "text",
+    x = 165, 
+    y = .09,
+    label = "Population mean"
+  ) +
+  labs(
+      x = "Height (cm)"
+  )
+```
+:::
+:::
+
+. . .
+
+The sample means and SDs are similar, but not exactly equal to the population parameters.
+
+If we sample 5000x, we can see that the average of these 5000 sample means (depicted in blue) is similar to the population mean!\
+Average sample mean across 5000 sample: $\hat{X} = 168.3463$.
+
+::: notes
+grey = population histogramm
+:::
+
+## Standard Error of the Mean
+
+In the example on the last slide, the means were all pretty close to each other, i.e. the blue distribution was very narrow and the variance small. Of course, it could also be the case that the distribution was wider and we would be less certain of our estimate of the population mean.
+
+. . .
+
+We can quantify this variability of the sample mean with the **standard error of the mean (SEM)**.
+
+$$SEM = \frac{\hat{\sigma}}{\sqrt{n}}$$
+
+This formula needs two values: the population variability and the size of our sample.
+
+We can only control our sample size, thus if we want a better estimate, we can increase sample size!
+
+::: notes
+SEM = SD of sampling distribution of the mean
+
+Use the sigma of the data? similar to sd(sample_means)
+
+"the utility of larger samples diminishes with the square root of the sample size": Doubling the sample size will not double the quality of the statistic.
+:::
+
+## The Central Limit Theorem
+
+The Central Limit Theorem (CLT) is a central (and often misunderstood) concept of statistics.
+
+CLT: With larger sample sizes, the sampling distribution of the mean will become **normally distributed**\*, *even if the data within each sample are not normally distributed*!
+
+![Normal Distribution of Height](images/norm_dist_height.PNG){fig-align="left" width="399"}
+
+::: aside
+\*There are several probability distributions that will be covered in this week's R session. The normal (or Gaussian) distribution is the typical bell-shaped curve and is highly prevalent in nature!\
+It is described by the mean and the standard deviation.
+:::
+
+::: notes
+Described by mean and sd: Shape never changes, only location and width!
+:::
+
+## CLT in Action
+
+On the left you can see a highly skewed distribution of alcohol consumption per year (from the NHANES dataset). If we repeatedly draw samples of size 50 from the datset and take the mean, we get the right distribution of sample means - which looks a lot more "normal" (normal distribution is added in red)!
+
+```{r}
+#| echo: false
+#| message: false
+library(cowplot)
+
+get_sampling_dist <- function(sampSize, nsamps = 2500) {
+  sampMeansFull <- array(NA, nsamps)
+  NHANES_clean <- NHANES %>%
+    drop_na(AlcoholYear)
+  for (i in 1:nsamps) {
+    NHANES_sample <- sample_n(NHANES_clean, sampSize)
+    sampMeansFull[i] <- mean(NHANES_sample$AlcoholYear)
+  }
+  sampMeansFullDf <- data.frame(sampMeans = sampMeansFull)
+  p2 <- ggplot(sampMeansFullDf, aes(sampMeans)) +
+    geom_freqpoly(aes(y = ..density..), bins = 100, color = "blue", size = 0.75) +
+    stat_function(
+      fun = dnorm, n = 100,
+      args = list(
+        mean = mean(sampMeansFull),
+        sd = sd(sampMeansFull)
+      ), size = 1.5, color = "red"
+    ) +
+    xlab("mean AlcoholYear")
+  return(p2)
+}
+
+NHANES_cleanAlc <- NHANES %>%	
+  drop_na(AlcoholYear)	
+p1 <- ggplot(NHANES_cleanAlc, aes(AlcoholYear)) +	
+  geom_histogram(binwidth = 7)
+p2 <- get_sampling_dist(50)
+plot_grid(p1,p2)
+```
+
+. . .
+
+The CLT is important because it allows us to safely assume that the sampling distribution **of the mean** will be normal in most cases, which is a necessary prerequisite for many statistical techniques.
+
+# Resampling and Simulation
+
+## Monte Carlo Simulation
+
+With the increasing use of computers, simulations have become an essential part of modern statistics. Monte Carlo simulations are the most common ones in statistics.
+
+There are four steps to performing a Monte Carlo simulation:
+
+1.  Define a **domain of possible values**.
+
+2.  **Generate random numbers** within that domain from a probability distribution.
+
+3.  Perform a **computation** using the random numbers.
+
+4.  Combine the results across **many repetitions**.
+
+## Randomness in Statistics
+
+**Random** = unpredictable.
+
+For a Monte Carlo simulation, we need **pseudo-random numbers**, which are generated by a computer algorithm.
+
+. . .
+
+We can simply generate random numbers from different distributions with R, e.g. with `rnorm()` to draw random numbers from a normal distribution:
+
+```{r}
+#| echo: true
+#| output-location: column-fragment
+# Draw 10000 random numbers of a normal distribution with mean=0, sd=1
+rand_num <- rnorm(n=10000, mean=0, sd=1)
+
+# Plot the random numbers and verify that they make up a normal distribution
+tibble(
+    x = rand_num
+  ) %>% 
+  ggplot(aes(x)) +
+  geom_histogram(bins = 100) +
+  labs(title = "Normal")
+```
+
+. . .
+
+Each time, we generate random numbers, these will differ slightly.
+
+But we can also generate the exact same set of random numbers (which will be helpful to reproduce results!) by setting the random seed to a specific value such as 123: `set.seed(123)`.
+
+::: aside
+*Truly random* numbers, that are completely unpredictable, are only possible through physical processes that are difficult to obtain.
+
+*Pseudo-random* numbers will only seem random (they are difficult to predict) but will repeat at some point.
+:::
+
+::: notes
+Flip a coin, we don't know the outcome! (Only if we knew a lot of physics and the conditions...)
+
+Humans have a bad sense of randomness, we think we see patterns everywhere (gambler's fallacy, being due for a win).
+:::
+
+## Using Monte Carlo Simulations
+
+Example: Let's try to find out how much time we should allow for an in-class quiz.
+
+We pretend to know the distribution of completion times is normal, with mean = 5min and SD = 1 min.
+
+**How long does the test period needs to be so that we can expect all students to finish 99% of the time?**
+
+. . .
+
+To answer this question, we need the distribution of the *longest* finishing times.
+
+What we will do is to simulate finishing times for a great number of quizzes and take the maximum of each (the longest finishing time). We can then look at the distribution of max. finishing times and see where the 99% quantile is.\
+This value is the amount of time that we should allow - *given our assumptions*!!
+
+## Using Monte Carlo Simulations 2
+
+Let's repeat the steps of the simulation by going through the four steps mentioned before:
+
+Define a **domain of possible values**.
+
+\--\> Our assumptions: The values would come from a normal distribution with $mean = 5$ and $SD = 1$.
+
+. . .
+
+**Generate random numbers** within that domain from a probability distribution.
+
+```{r}
+#| echo: true
+rand_num <- rnorm(n = 1000, mean = 5, sd = 1)
+```
+
+. . .
+
+Perform a **computation** using the random numbers.
+
+```{r}
+#| echo: true
+max_rand_num <- max(rand_num)
+```
+
+. . .
+
+Combine the results across **many repetitions**.
+
+\--\> In step 2, we actually do this already if we use a bigger number for n!
+
+```{r}
+#| echo: true
+rand_num <- rnorm(n = 1000, mean = 5, sd = 1)
+```
+
+## The Bootstrap
+
+We can use simulations to demonstrate statistical principles (like we just did) but also to answer statistical questions.
+
+The **bootstrap** is a simulation technique that allows us to quantify our *uncertainty* of estimates!
+
+. . .
+
+1.  We repeatedly sample *with replacement* from an actual dataset.
+2.  We compute a statistic of interest for each sample.
+3.  We get the distribution of those statistics and use it as our sampling distribution.
+
+## Bootstrap Example
+
+Let's use the bootstrap to estimate the sampling distribution of the mean heights of the NHANES dataset. We can then compare the result to the SEM (=uncertainty of the mean) that we discussed earlier.
+
+::: columns
+::: colum
+```{r}
+#| echo: true
+# perform the bootstrap to compute SEM and compare to parametric method
+nRuns <- 2500
+sampleSize <- 32
+
+heightSample <- 
+  NHANES_adult %>%
+  sample_n(sampleSize) # draw 32 observations
+
+# function to bootstrap (sample w/ replacement) & get mean
+bootMeanHeight <- function(df) {
+  bootSample <- sample_n(df, dim(df)[1], replace = TRUE)
+  return(mean(bootSample$Height))
+}
+
+# run function 2500x
+bootMeans <- replicate(nRuns, bootMeanHeight(heightSample))
+
+# calculate "normal" SEM and bootstrap SEM
+SEM_standard <- sd(heightSample$Height) / sqrt(sampleSize)
+SEM_bootstrap <- sd(bootMeans)
+```
+:::
+
+::: column
+```{r bootstrapSEM,echo=FALSE,fig.cap="An example of bootstrapping to compute the standard error of the mean adult height in the NHANES dataset. The histogram shows the distribution of means across bootstrap samples, while the red line shows the normal distribution based on the sample mean and standard deviation.",fig.width=4,fig.height=4,out.height='50%'}
+
+options(pillar.sigfig = 3)
+tibble(bootMeans=bootMeans) %>%
+  ggplot(aes(bootMeans)) + 
+    geom_histogram(aes(y=..density..),bins=50) + 
+  stat_function(fun = dnorm, n = 100, 
+                args = list(mean = mean(heightSample$Height), 
+                            sd = SEM_standard),
+                size=1.5,color='red'
+                ) 
+
+
+```
+:::
+:::
+
+## That's it!
+
+Thanks!
+
+This week, you should work on your own (or in small groups) through **chapter 8** of *Fundamentals of Quantitative Analysis*! It's a rather interactive chapter, and it will be useful to learn more about probability distributions.
+
+Next week, we will start with the actual statistical analysis: Hypothesis testing!

@@ -1,0 +1,942 @@
+---
+title: "Hypothesis Testing"
+subtitle: "Biostatistics"
+author: "Dr. Lea Hildebrandt"
+format: 
+  revealjs:
+    smaller: true
+    scrollable: true
+    slide-number: true
+    theme: serif
+    chalkboard: true
+editor: visual
+from: markdown+emoji
+---
+
+```{r}
+#| echo: false
+#| message: false
+
+library(ggplot2)
+library(cowplot)
+library(knitr)
+# load the NHANES data library
+library(NHANES)
+library(boot)
+library(MASS)
+library(pwr)
+library(tidyverse)
+set.seed(123456) # set random seed to exactly replicate results
+
+# drop duplicated IDs within the NHANES dataset
+NHANES <- 
+  NHANES %>% 
+  dplyr::distinct(ID,.keep_all = TRUE)
+NHANES_adult <- 
+  NHANES %>%
+  drop_na(PhysActive,BMI) %>%
+  subset(Age >= 18)
+
+
+```
+
+# Hypothesis Testing
+
+Remember, the three goals of statistics: Describe, Decide, Predict.
+
+We will now turn to deciding whether a particular hypothesis is supported by the data.
+
+. . .
+
+We will cover **null hypothesis significance testing (NHST)**, which is the main technique you will encounter in publications.
+
+. . .
+
+However, NHST is also criticized (see chapter 18 of ST21)! It is often used mindlessly and often misunderstood.
+
+::: notes
+learning to use and interpret results is crucial to understand research
+:::
+
+## Null Hypothesis Significance Testing
+
+Example: We have two groups (treatment and control). We also have a hypothesis: The treatment group has lower scores on measure X. We have the data (X for both groups), now what?
+
+::: incremental
+-   We take the hypothesis (treatment = lower X than control) and negate it (Treatment not lower/equal X compared to control). This is our **null hypothesis**.
+
+-   We now assume that the null hypothesis is true. Then we look at the data and determine how likely they would be if the null hypothesis were true.
+
+-   If the data are *very unlikely* we reject the null hypothesis in favor of the **alternative hypothesis** (our hypothesis).
+
+-   (If the data are not very unlikely, we stick with (or fail to reject) the null hypothesis.
+:::
+
+::: notes
+How would you compare the two groups? Calculate the likelihood that there is a reduction in X between the groups? No, more complicated! And counterintuitive!
+:::
+
+## The Process of NHST
+
+To be more precise, we can break down the process of null hypothesis testing in six steps:
+
+::: incremental
+1.  Formulate a hypothesis that embodies our prediction (*before seeing the data*)
+
+2.  Specify null and alternative hypotheses
+
+3.  Collect some data relevant to the hypothesis
+
+4.  Fit a model to the data that represents the alternative hypothesis and compute a test statistic
+
+5.  Compute the probability of the observed value of that statistic assuming that the null hypothesis is true
+
+6.  Assess the "statistical significance" of the result
+:::
+
+. . .
+
+Let's go through these steps, using the NHANES dataset and the research question: *Is physical activity related to body mass index (BMI)*?
+
+## Step 1: Formulate a Hypothesis of Interest
+
+Hypothesis:
+
+. . .
+
+"BMI is greater for people who do not engage in physical activity than for those who do."
+
+## Step 2: Specify the Null and Alternative Hypotheses
+
+The null hypothesis ($H_0$) is the baseline against which we test our hypothesis of interest.
+
+The alternative hypothesis ($H_A$) describes what we expect if there is an effect.
+
+NHST works under the assumption the $H_0$ is true (unless the evidence shows otherwise).
+
+. . .
+
+We also have to decide whether we want to test a directional ("greater OR smaller than") or non-directional ("different from") hypothesis.
+
+What do we specify if we hypothesize that "BMI is greater..."?
+
+. . .
+
+$H_0 = BMI_{active} \ge BMI_{inactive}$
+
+$H_A = BMI_{active} < BMI_{inactive}$
+
+::: aside
+A non-directional hypothesis is more conservative and thus preferred, unless you have strong a priori reasons to expect an effect in a certain direction.
+:::
+
+::: notes
+Test against $H_0$: What would we expect the data to look like if there was no effect?
+
+Non-directional: no direction! :D Directional: prior knowledge
+:::
+
+## Step 3: Collect Data
+
+For this example, we sample 250 individuals from the NHANES dataset.
+
+```{r}
+#| echo: false
+
+# sample 250 adults from NHANES and compute mean BMI separately for active
+# and inactive individuals
+sampSize <- 250
+NHANES_sample <- 
+  NHANES_adult %>%
+  sample_n(sampSize)
+sampleSummary <-
+  NHANES_sample %>%
+  group_by(PhysActive) %>%
+  summarize(
+    N = length(BMI),
+    mean = mean(BMI),
+    sd = sd(BMI)
+  )
+# calculate the mean difference in BMI between active 
+# and inactive individuals; we'll use this later to calculate the t-statistic
+meanDiff <- 
+  sampleSummary %>% 
+  dplyr::select(
+    PhysActive,
+    mean
+  ) %>% 
+  spread(PhysActive, mean) %>% 
+  mutate(
+    meanDiff = No - Yes
+  ) %>% 
+  pull(meanDiff)
+# calculate the summed variances in BMI for active 
+# and inactive individuals; we'll use this later to calculate the t-statistic
+sumVariance <- 
+  sampleSummary %>% 
+  select(
+    PhysActive,
+    N,
+    sd
+  ) %>% 
+  gather(column, stat, N:sd) %>% 
+  unite(temp, PhysActive, column) %>% 
+  spread(temp, stat) %>% 
+  mutate(
+    sumVariance = No_sd**2 / No_N + Yes_sd**2 / Yes_N
+  ) %>% 
+  pull(sumVariance)
+s1 = sampleSummary$sd[1]
+s2 = sampleSummary$sd[2]
+n1 = sampleSummary$N[1]
+n2 = sampleSummary$N[2]
+welch_df = (s1/n1 + s2/n2)**2 / ((s1/n1)**2/(n1-1) + (s2/n2)**2/(n2-1))
+# print sampleSummary table
+kable(sampleSummary, digits=4,caption='Summary of BMI data for active versus inactive individuals')
+
+ggplot(NHANES_sample,aes(PhysActive,BMI)) +
+  geom_boxplot() + 
+  xlab('Physically active?') + 
+  ylab('Body Mass Index (BMI)')
+```
+
+## Step 4: Fit a Model
+
+We want to compute a **test statistic** that helps us decide whether to reject $H_0$ or not.
+
+. . .
+
+The model we fit needs to quantify (= provide the test statistic) the amount of evidence in favor of $H_A$ relative to the variability of the data.
+
+. . .
+
+The test statistic will have a probability distribution, allowing us to determine how likely our observed value of the statistic is under $H_0$.
+
+. . .
+
+In the example, we need a test statistic that tests the difference between two means (we have two mean BMI, one for each group): The *t* statistic.
+
+$$t = \frac{\bar{X_1} - \bar{X_2}}{\sqrt{\frac{S_1^2}{n_1} + \frac{S_2^2}{n_2}}}$$
+
+$\bar{X_1}$ and $\bar{X_2}$ are the means of the two group, $S_1^2$ and $S_2^2$ are the estimated variances of the groups, $n_1$ and $n_2$ are the sizes of the two groups.
+
+::: notes
+test statistic = measure of the size of the effect compared to the variability in the data.
+
+The *t* statistic is appropriate for comparing the means of two groups when the sample sizes are relatively small and the population standard deviation is unknown.
+
+The variance of a difference between two independent variables is the sum of the variances of each individual variable (var(A−B)=var(A)+var(B))
+
+one can view the the *t* statistic as a way of quantifying how large the difference between groups is in relation to the sampling variability of the difference between means
+:::
+
+## The *t* Distribution
+
+The *t* statistic is distributed according to the *t* distribution, which looks similar to a normal distribution (depending on the/with a large number of degrees of freedom).
+
+**Degrees of freedom** for the *t* test: $observations - 2$ = $n_1 + n_2 - 2$ (when the groups are the same size)
+
+If the group sizes are unequal: $\mathrm{d.f.} = \frac{\left(\frac{S_1^2}{n_1} + \frac{S_2^2}{n_2}\right)^2}{\frac{\left(S_1^2/n_1\right)^2}{n_1-1} + \frac{\left(S_2^2/n_2\right)^2}{n_2-1}}$\$
+
+::: notes
+DF: we have calculated two means and have thus given up two DFs (these are fixed already)
+
+Will be smaller if sample sizes unequal (here 241.12 vs 248 for equal)
+:::
+
+## Step 5: Determine the Probability of the Observed Result under the Null Hypothesis
+
+We do not check likelihood of the alternative distribution or likelihood that the null hypothesis is true, but rather:
+
+*How likely is it, given that we assume* $H_0$ is true, to observe a statistic at least as extreme as the one we observed.
+
+\--\> We need to know the distribution of the expected statistic, assuming $H_0$ is true. Then we can calculate how (un-)likely it is to find the statistic (or a more extreme value) we found in our data.
+
+. . .
+
+```{r}
+#| echo: true
+
+distDft1000 <- data.frame(x=seq(-4,4,0.01)) %>%
+  mutate(normal=dt(x, df=1000), Distribution='t (df=1000)')
+
+p2 <-ggplot(distDft1000,aes(x=x, y=normal)) + 
+  geom_line(size=2) + 
+  ylab('density') + 
+  ylim(0, 0.5) + 
+  theme(text = element_text(size=14)) +
+  theme(legend.position=c(0.2, 0.8),
+        legend.title = element_text(size = 20),
+        legend.text = element_text(size = 20)) + 
+  geom_vline(xintercept = 2,color='red',size=1)
+
+
+```
+
+::: notes
+counter-intuitive: We check the nulldistribution not the one of \$H_A\$! But we also don't check how likely it is that $H_0$ is true, but rather the likelihood under the null hypothesis of observing a statistic at least as extreme as the one we observed.
+
+at least as extreme: Prob of each particular value = 0
+
+try to find out how weird statistic found is (or weirder) --\> count all weird(er) possibilities
+:::
+
+## A Simple Example
+
+Is a coin biased if we flip a coin 100x and we get 70 heads?
+
+$H_0: P(heads) \le 0.5$ and $H_A: P(heads) > 0.5$
+
+Test statistic = number of heads counted.
+
+How likely is it that we would observe 70 or more heads if the coin is unbiased (chance of 50% for heads)?
+
+. . .
+
+If we flip a (fair) coin 100 times, we would get the following distribution:
+
+```{r}
+#| echo: false
+# create function to toss coins
+tossCoins <- function() {
+  flips <- runif(100) > 0.5 
+  return(sum(flips))
+}
+# compute the probability of 69 or fewer heads, when P(heads)=0.5
+p_lt_70 <- pbinom(69, 100, 0.5) 
+# the probability of 70 or more heads is simply the complement of p_lt_70
+p_ge_70 <- 1 - p_lt_70
+
+# use a large number of replications since this is fast
+coinFlips <- replicate(100000, tossCoins())
+p_ge_70_sim <- mean(coinFlips >= 70)
+ggplot(data.frame(coinFlips),aes(coinFlips))  +
+  geom_histogram(binwidth = 1) + 
+  geom_vline(xintercept = 70,color='red',size=1)
+```
+
+It is very unlikely to get 70 heads if the coin is fair!
+
+::: notes
+fair coin: null distribution
+:::
+
+## P-Value
+
+Let's go back to out BMI example.
+
+We first need to calculate the *t* statistic:
+
+```{r}
+#| echo: false
+kable(sampleSummary, digits=4,caption='Summary of BMI data for active versus inactive individuals')
+```
+
+$$t = \frac{\bar{X_1} - \bar{X_2}}{\sqrt{\frac{S_1^2}{n_1} + \frac{S_2^2}{n_2}}}$$
+
+$$t = \frac{30 - 27}{\sqrt{\frac{9^2}{131} + \frac{5.2^2}{119}}}$$
+
+$$t = 3.86$$
+
+. . .
+
+The question is: What is the likelihood that we would find a *t* statistic of these size or more extreme if the true difference between the groups is zero (or less, if directional null hypothesis).
+
+::: aside
+$t$ statistics if we use the unrounded values!
+:::
+
+## P-Value 2
+
+We can use the *t* distribution to calculate this probability. We just need the degrees of freedom, which are $DF = 241.12$, and we can than use all these values (e.g. in a function in R) :
+
+$p(t > 3.86, df = 241.12) = 0.000072$
+
+This small probability tells us that our observed t value is relatively unlikely if $H_0$ is really true.
+
+. . .
+
+This is the *p*-Value for a directional hypothesis. In this case, we only looked at the upper tail probability. With a non-directional hypothesis, we would want to account for both tail probabilities, i.e. how likely it is that a $t > 3.86$ OR $t < -3.86$ is found. In this case, we can simply multiply the *p*-Value found above by 2 (since it is a symmetric distribution):
+
+$t = 0.000145$
+
+## P-Value using Randomization
+
+We can also use our simulation skills to determine the null distribution!
+
+. . .
+
+We can randomly rearrange (or **permute**) data so that no relationship is present, e.g. assigning group membership to the participants randomly. In this case, $H_0$ should thus be true.
+
+We would do this a large amount of times (e.g. 10000), calculate the *t* statistics for each iteration, and draw a histogram to show the distribution.
+
+## P-Values using Randomization 2
+
+```{r}
+#| echo: false
+# create function to shuffle BMI data
+shuffleBMIstat <- function() {
+  bmiDataShuffled <- 
+    NHANES_sample %>%
+    select(BMI, PhysActive) %>%
+    mutate(
+      BMI = sample(BMI)
+    )
+  # compute the difference
+  simResult <- t.test(
+    BMI ~ PhysActive,
+    data = bmiDataShuffled,
+  )
+  return(simResult$statistic)
+}
+# run function 5000 times and save output
+nRuns <- 5000
+meanDiffSimDf <- 
+  data.frame(
+    meanDiffSim = replicate(nRuns, shuffleBMIstat())
+  )
+# compute the empirical probability of t values larger than observed
+# value under the randomization null
+bmtTTest <- 
+  t.test(
+  BMI ~ PhysActive,
+  data = NHANES_sample,
+  alternative = "greater"
+)
+bmiPvalRand <- 
+  mean(meanDiffSimDf$meanDiffSim >= bmtTTest$statistic)
+
+
+meanDiffSimDf %>% 
+  ggplot(aes(meanDiffSim)) +
+  geom_histogram(bins = 200) +
+  geom_vline(xintercept = bmtTTest$statistic, color = "blue") +
+  xlab("T stat: BMI difference between groups") +
+  geom_histogram(
+    data = meanDiffSimDf %>% 
+      filter(meanDiffSim >= bmtTTest$statistic), 
+    aes(meanDiffSim), 
+    bins = 200, 
+    fill = "gray"
+  )
+
+```
+
+The blue line is the observed *t* statistic. We can calculate a *p*-Value by counting how many of the simulated *t*-values are at least as extreme as our observed one and dividing it by the number of simulations. The p-value obtained from randomization (0.000000) is very similar to the one obtained using the t distribution (0.000075).
+
+::: aside
+Using simulations to get the null distribution can be helpful if the assumptions (normal distribution in each group) are violated or if we don't know the theoretical distribution of the test statistic!
+:::
+
+::: notes
+exchangeability: We can use permutations if all observsations are distributed in the same way, such that we can shuffle them without changing the overall distribution.
+
+Not the case if we have dependent observations, e.g. siblings...
+:::
+
+## Step 6: Assess the "Statistical Significance" of the Result
+
+Is the *p*-value determined small enough to reject the null hypothesis (and thus conclude that the alternative hypothesis is true)?
+
+. . .
+
+Traditionally, we reject $H_0$ if the *p*-value is less than **0.05**. (Fisher's approach)
+
+. . .
+
+(Either there is an effect/$H_A$ is true or there is a small chance (5%) that there is actually no effect but we coincidentally found such a large value --\> false positive)
+
+. . .
+
+Neyman-Pearson approach: In the long run, we will know how often we are wrong:
+
+-   $\alpha = .05$ (false positives or Type I error: We reject $H_0$ although it is correct),
+
+-   $\beta = .2$ (false negatives or Type II error: We accept $H_0$ although it is wrong),
+
+-   We will be correct if we reject $H_0$ when it is wrong (there is actually a difference/an effect) or if we do not reject $H_0$ when it is correct (and there is no difference between groups).
+
+In both cases, a significance level of $\alpha = .05$ is usually used.
+
+::: notes
+How much evidence do we require?
+
+0.05 Fisher never intended it to be fixed
+
+Before computers, tables were used, and all tables had .05 in it!
+
+Fisher: Evidence for hypothesis, NP: long-run error rate
+:::
+
+## What does a significant result mean?
+
+There is a lot of discussion about the usefulness of using $\alpha = .05$ as well as about the interpretation of a significant result/ certain *p*-value!
+
+. . .
+
+::: incremental
+A *p*-value of .01 does....
+
+-   NOT mean that the probability that $H_0$ is true is 0.01!
+
+    -   We tested $P(data|H_0)$ not $P(H_0|data)$!
+
+-   NOT mean that the probability that you're making a wrong decision is .01!
+
+    -   This would also be \$P(H_0\|data)\$! p-values are probabilities of data (under $H_0$), not probabilities of hypotheses.
+
+<!-- -->
+
+-   NOT mean that you would get the same result 99% of the time if you repeated the study.
+
+    -   The *p*-value is a statement about the likelihood of a particular dataset under the null.
+
+-   NOT mean that you found a practically important effect.
+
+    -   Difference between *statistical significance* and *practical significance*! Effect sizes more important. (Statistical significance depends on sample size!)
+:::
+
+## Multiple Testing
+
+Nowadays, we often have huge datasets in neuroscience, e.g. collecting brain imaging data of thousands of voxels or quantifying the entire genome.
+
+. . .
+
+Let's look at *genome-wide associations studies* (GWAS). We have more than a million places in where the genome could differ. If we want to know whether *schizophrenia* was associated with any of these differences, we would do \~1.000.000 tests! If we simply used p\<.05 as a threshold, we would get a lot of (500!) false positives, even if no true effect is present.
+
+. . .
+
+In this case, we have a lot of dependent tests, which form a *family of tests*. In such a case, we need to control the *family-wise error rate*, e.g. by fixing that to a total of p\<.05 (i.e. the probability of making *any* Type I error in our study is controlled at .05).
+
+. . .
+
+One option is to use the Bonferroni correction, in which we divide .05 by the number of tests (e.g. 1.000.000) and use the new value (p\>.000005) as threshold for each individual test.
+
+# Quantifying Effects and Designing Studies
+
+```{r}
+#| echo: false
+NHANES_adult <- 
+  NHANES %>%
+  drop_na(Weight) %>%
+  subset(Age>=18)
+```
+
+So far, we have discussed how to use data to test hypotheses, which results in either rejecting or failing to reject the null hypothesis $H_0$.
+
+However, looking only at the significance (reject or not) ignores the *uncertainty* we have about the conclusion. We can calculate **confidence intervals** to quantify uncertainty about our estimates.
+
+Furthermore, we would also like to know how large an effect is. For this aim, we will calculate **effect sizes**.
+
+Finally, we will also talk about **statistical power**, which tells us how likely we are to find a true effect.
+
+## Confidence Intervals
+
+Single value statistic (e.g. *t*-value, mean...) = point estimate
+
+. . .
+
+We know from the sampling error discussion that each point estimate comes with some uncertainty, described by the standard error.
+
+Remember, the SEM (standard error of the mean) was calculated with the population standard deviation $\hat{\sigma}$ and the square root of the sample size $n$:
+
+$$SEM = \frac{\hat{\sigma}}{\sqrt{n}}$$
+
+$n$ is generally under our control ($\hat{\sigma}$ is unknown but fixed), and we can thus *decrease* our uncertainty by *increasing* the sample size.
+
+. . .
+
+We can more directly describe our uncertainty with **confidence intervals (CI)**, which provides a range of values for our parameter estimate that are consistent with our data! The wider the CI, the more uncertain we are about our estimate.
+
+. . .
+
+Because the CI depends on the SE, which decreases with sample size, the CI also gets narrower with increasing sample size:
+
+```{r}
+#| echo: false
+ssDf <- 
+  tibble(sampSize=c(10,20,30,40,50,75,100,200,300,400,500)) %>%
+  mutate(
+    meanHeight=mean(NHANES_sample$Height),
+    ci.lower = meanHeight + qt(0.025,sampSize)*sd(NHANES_adult$Weight)/sqrt(sampSize),
+    ci.upper = meanHeight + qt(0.975,sampSize)*sd(NHANES_adult$Weight)/sqrt(sampSize)
+  )
+ggplot(ssDf, aes(sampSize, meanHeight)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ci.lower, ymax = ci.upper), width = 0, size = 1) +
+  labs(
+    x = "Sample size",
+    y = "Mean height"
+  )
+```
+
+::: notes
+if we sample the whole population, we *know* the population parameter and there is no uncertainty at all!
+:::
+
+## Confidence Intervals 2
+
+Just like *p*-values, confidence intervals can be confusing because they are counter-intuitive:
+
+A 95% CI for a statistic does NOT mean that we can have 95% confidence that the true parameter falls within this interval!
+
+. . .
+
+It is, again, the long-run probability: It will contain the true population parameter 95% of the time in the long-run.
+
+Here you can see the CIs for 100 subsamples (from the NHANES data, where we know the "true population" mean = dashed line). As you can see, if sample 100x from the population and calculate the CIs for each sample mean, it will contain the true population mean in 95% of cases.
+
+```{r}
+#| echo: false
+
+set.seed(123456)
+nsamples <- 100
+sample_ci <- data.frame(run=0, lower=rep(0, nsamples), upper=rep(0, nsamples), captured=0)
+
+for (i in 1:nsamples){
+  sampSize <- 250
+  NHANES_sample <- sample_n(NHANES_adult, sampSize)
+  sample_summary <- NHANES_sample %>%
+  summarize(
+    meanWeight = mean(Weight),
+    sdWeight = sd(Weight)
+  ) %>%
+  mutate(
+    cutoff_lower = qt(0.025, sampSize),
+    cutoff_upper = qt(0.975, sampSize),
+    SEM = sdWeight / sqrt(sampSize),
+    CI_lower = meanWeight + cutoff_lower * SEM,
+    CI_upper = meanWeight + cutoff_upper * SEM
+  ) 
+  # does the CI capture the true mean
+  captured = sample_summary['CI_lower'] < mean(NHANES_adult$Weight) & sample_summary['CI_upper'] > mean(NHANES_adult$Weight)
+  sample_ci[i, ] = c(i, sample_summary[c('CI_lower', 'CI_upper')], captured)
+}
+
+# plot intervals
+#sample_ci['captured'] = as.factor(sample_ci['captured'])
+ggplot(sample_ci, aes(run, CI_lower)) + 
+  geom_segment(aes(x=run, xend=run, y=lower, yend=upper, color=as.factor(captured))) + 
+  geom_hline(yintercept=mean(NHANES_adult$Weight), linetype='dashed') + 
+  ylab('Weight (kg)') + 
+  xlab('samples') + 
+  labs(color = "CI captures mean") 
+
+```
+
+## Calculating the CI
+
+We calculate the CI as follows:
+
+$CI = \text{point estimate} \pm \text{critical value} * \text{standard error}$
+
+where the critical value depends on the sampling distribution.
+
+## Confidence Intervals using the Normal Distribution
+
+The critical value are the values of the standard normal distribution that capture 95% (in case of a 95% CI) of the distribution, i.e. the 2.5^th^ and 97.5^th^ percentile.
+
+```{r}
+#| echo: true
+qnorm(p=c(.025,.975))
+```
+
+The CI of the mean would thus be:
+
+$CI = \bar{X} \pm 1.96*SE$
+
+Our mean weight in the NHANES sample was 79.92 kg and the SE was $\frac{SD_{weight}}{\sqrt{n}} = 1.35$ (for a random n=250 subsample).
+
+The lower boundary of the CI of the mean would then be $CI = 79.92 - 1.96 * 1.35 = 77.28$ and the upper $CI = 79.92 + 1.96 * 1.35 = 82.56$. We would write this as \[77.28, 82.56\].
+
+## CI using the *t* Distribution
+
+If we don't know the population standard deviation, which is usually the case, it is more appropriate to use the *t* distribution.
+
+In this case, we use the critical value of the *t* distribution:
+
+```{r}
+#| echo: true
+qt(p = c(.025, .975), 250)
+```
+
+For the NHANES weight example, the CI would be: $79.92 \pm 1.97 * 1.35 = [77.15 - 82.58]$.
+
+::: notes
+The *t* distribution is wider than the normal distribution (especially for smaller samples), which means that the CI will be slightly wider -\> extra uncertainty smaller samples.
+:::
+
+::: notes
+population parameter hast a fixed value, so it either falls into CI or not. (Doesn't make sense to talk about probability of it)
+:::
+
+## Computing CIs using the Bootstrap
+
+If we can't assume normality or don't know the sampling distribution, we can also use the **bootstrap** to compute the CI.
+
+. . .
+
+Reminder: bootstrap = resampling with replacement, using this distribution as the sampling distribution!
+
+. . .
+
+If we use an R function for bootstrapping (\`boot()\`), we get CI estimates that are fairly close to the ones calculated:
+
+```{r}
+#| echo: false
+meanWeight <- function(df, foo) {
+  return(mean(df[foo, ]$Weight))
+}
+bs <- boot(NHANES_sample, meanWeight, 1000)
+# use the percentile bootstrap
+bootci <- boot.ci(bs, type = "perc")
+print(bootci)
+```
+
+## Relationship of CIs to Hypothesis Tests
+
+If the CI *does not* include the value of the null hypothesis (e.g. often 0), then the associated statistical test would be significant.
+
+. . .
+
+If we want to compare two conditions, it gets trickier.
+
+-   If each mean is contained within the CI of the other mean, then there's *definitely no* significant difference.
+
+-   If there is no overlap between CIs, then there is *certainly* a significant difference.
+
+-   If the CIs overlap (but don't contain the other mean), it depends on the relative variability of the two variables --\> there is no general answer!
+
+In general, avoid this "eyeball test"!
+
+## Effect Sizes
+
+Practical significance!
+
+We need a standard way to describe the size of an effect.
+
+An **effect size** is a standardized measurement that compares the size of an effect to e.g. the variability of the statistic. This is also referred to as *signal-to-noise ratio.*
+
+There are many different effect sizes!
+
+## Cohen's D
+
+Cohen's d is used to quantify the difference between *two* means, in terms of their SD:
+
+$$d = \frac{\bar{X_1} - \bar{X}_2}{s}$$
+
+where $\hat{X_1}$ and $\hat{X_2}$ are the means of the two groups and $s$ is the pooled SD:
+
+$$s = \sqrt{\frac{(n_1 - 1)s^2_1 + (n_2 - 1)s^2_2 }{n_1 +n_2 -2}}$$
+
+which is a combination of both groups' SDs ($s$'s) weighted by their sample size ($n$'s).
+
+::: notes
+Note that this is very similar to the *t* statistic, only the denominator differs: \
+*t* = SEM, *d* = SD of the data\
+--\> d will not grow with sample size but remain stable!
+:::
+
+. . .
+
+There is a commonly used interpretation of Cohen's d (although it is criticized to use these cutoffs!):
+
+```{r}
+#| echo: false
+dInterp=tibble("D"=c('0.0 - 0.2',
+                     '0.2 - 0.5',
+                     '0.5 - 0.8',
+                     '0.8 - '),
+                   "Interpretation"=c('negligible','small','medium','large')
+                  )
+kable(dInterp, caption="Interpetation of Cohen's D")
+```
+
+Even with a huge effect, the distributions still overlap greatly!
+
+```{r}
+#| echo: false
+ggplot(NHANES_sample,aes(x=Height,color=Gender)) + 
+  geom_density(size=1) + 
+  theme(legend.position = c(0,0.8))
+```
+
+## Pearson's r
+
+Pearson's r is a *correlation coefficient*, and thus a measure of the strength of a *linear* relationship between *two continuous* variables.
+
+*r* can vary from -1 to 1. -1 is a perfect negative relationship, 0 no relationship, and 1 a perfect positive relationship.
+
+```{r}
+#| echo: true
+
+set.seed(123456789)
+p <- list()
+corrvals <- c(1,0.5,0,-0.5,-1)
+for (i in 1:length(corrvals)){
+  simdata <- data.frame(mvrnorm(n=50,mu=c(0,0),
+                  Sigma=matrix(c(1,corrvals[i],corrvals[i],1),2,2))
+                )
+  tmp <- ggplot(simdata,aes(X1,X2)) + 
+    geom_point(size=0.5) +
+    ggtitle(sprintf('r = %.02f',cor(simdata)[1,2]))
+  p[[i]] = tmp 
+}
+plot_grid(p[[1]],p[[2]],p[[3]],p[[4]],p[[5]])
+
+```
+
+::: notes
+more on correlations later in the semester!
+:::
+
+## Odds Ratio
+
+For binary variables, the odds ratio is a useful effect size.
+
+**Odds** describes the relative likelihood of some event happening versus not happening:
+
+$$
+\text{odds of A} = \frac{P(A)}{P(\neg{A})}
+$$
+
+**Odds ratio** is simply the ratio of two odds, i.e. $\frac{\text{odds of A}}{\text{odds of B}}$.
+
+. . .
+
+Example:
+
+```{r}
+#| echo: false
+
+smokingDf <- tibble(
+  Status = c("No Cancer", "Cancer"),
+  NeverSmoked = c(2883, 220),
+  CurrentSmoker = c(3829, 6784),
+)
+kable(smokingDf, caption="Lung cancer occurrence separately for current smokers and those who have never smoked")
+
+```
+
+```{r}
+#| echo: true
+
+pNeverSmokedCancer = 220 / (2883 + 220)
+pCurrentSmokerCancer = 6784 / (3829 + 6784)
+
+oddsCancerNeverSmoked <- pNeverSmokedCancer / (1 - pNeverSmokedCancer)
+
+oddsCancerCurrentSmoker <- pCurrentSmokerCancer / (1 - pCurrentSmokerCancer)
+
+(oddsRatio <- oddsCancerCurrentSmoker/oddsCancerNeverSmoked)
+```
+
+The odds ratio of 23.22 tells us that the odds of lung cancer in smokers are roughly 23x higher than that of non-smokers!
+
+## Statistical Power
+
+Remember: *Type I* and *Type II error*!
+
+Tolerance for Type I errors set to $\alpha = 0.05$, which is very low --\> we want to avoid this errors!
+
+What about Type II errors?
+
+. . .
+
+Type II = failing to reject $H_0$ although an effect exists (often set at $\beta = 0.20$).
+
+But $\beta$ also depends on the effect size: The likelihood of finding a large effect is higher than finding a small effect!
+
+. . .
+
+**Statistical power** is the complement of the Type II error:\
+The likelihood of finding a positive result given that it exits!\
+$$power = 1 - \beta$$
+
+. . .
+
+Statistical power is affected by three factors:
+
+-   sample size (larger n = more power)
+
+-   effect size (more power to find large effect)
+
+-   Type I error rate (smaller Type I error = less power)
+
+::: notes
+Type I: false positives
+
+Type II: false negatives
+:::
+
+## Statistical Power 2
+
+Here we can see how these three factors influence the power (i.e. the proportion of significant results found):
+
+```{r}
+#| echo: false
+
+powerDf <-
+  expand.grid(
+    sampSizePerGroup = c(12, 24, 48, 96),
+    effectSize = c(.2, .5, .8),
+    alpha = c(0.005, 0.05)
+  ) %>%
+  tidyr::expand(effectSize, sampSizePerGroup, alpha) %>%
+  group_by(effectSize, sampSizePerGroup, alpha)
+runPowerSim <- function(df, nsims = 1000) {
+  p <- array(NA, dim = nsims)
+  for (s in 1:nsims) {
+    data <- data.frame(
+      y = rnorm(df$sampSizePerGroup * 2),
+      group = array(0, dim = df$sampSizePerGroup * 2)
+    )
+    data$group[1:df$sampSizePerGroup] <- 1
+    data$y[data$group == 1] <- data$y[data$group == 1] + df$effectSize
+    tt <- t.test(y ~ group, data = data)
+    p[s] <- tt$p.value
+  }
+  return(data.frame(power = mean(p < df$alpha)))
+}
+# run the simulation
+powerSimResults <- powerDf %>%
+  do(runPowerSim(.))
+
+ggplot(powerSimResults,
+       aes(sampSizePerGroup,power,color=as.factor(effectSize),linetype=as.factor(alpha))) +
+  geom_line(size=1) +
+  annotate('segment',x=0,xend=max(powerDf$sampSizePerGroup),
+           y=0.8,yend=0.8,linetype='dotted',size=.5) +
+  scale_x_continuous( breaks=unique(powerDf$sampSizePerGroup)) +
+  labs(
+    color = "Effect size",
+    x = "Sample size",
+    y = "Power",
+    linetype = "alpha"
+  )
+
+```
+
+The black dotted line denotes the standard 80% power that is often aimed at.
+
+. . .
+
+Even with n = 96, we have only little power to detect a small effect ($d = 0.2$): Only \~25% of studies would find the true effect. This means doing this study would be futile, we would likely fail to find the true effect.
+
+. . .
+
+Therefore, we would do a **power analysis** before we even run the study - to determine the necessary sample size for a well-powered study that would be able to find an effect if the effect is true.
+
+Furthermore, positive findings from an underpowered study are more likely to be false positive!
+
+::: notes
+More on that in Chapter 18 of ST21!
+:::
+
+## Thanks!
+
+That's it for today!
+
+There's no R class this week (because of a holiday!?), but feel free to practice on your own.
+
+Next week, we will start with conducting the first analysis.

@@ -15,8 +15,6 @@ editor: visual
 from: markdown+emoji
 ---
 
-# Welcome!
-
 ## Hello!
 
 Who am I?
@@ -31,56 +29,29 @@ Who are you?
 
 -   What's your attitude towards statistics?
 
-. . .
-
-Today, I'm feeling...
-
-![](images/moodmeter_en.jpg){fig-alt="Moodmeter"}
-
-::: notes
-Survey (Zoom) + Moodmeter (pick a stamp - top of screen, select annotate...)
-
-Too many people to have an introduction round!
-
-I know that you probably don't know each other yet, there will be some break-out sessions where you can get to know each other a bit (and talk about stats!) ;)
-
-Stats Anxiety: It will be packed, but it will be ok (You can always reach me with questions!)!
-:::
-
 ## Organizational Issues
 
-::: {.incremental .smaller}
--   *Warning*: The course only lasts until mid-December - but we have to squeeze the content of the full semester in these 8 weeks!
-
-    -   This means, we'll have two sessions per week, Statistics (Input) on Tuesdays and R Programming (Hands-on) on Wednesdays
-
--   The course will take place online!
-
-    -   Both sessions live/synchronous? Or e.g. videos on Tuesdays, live hands-on R session on Wednesdays together via Zoom?
-
--   Attendance is mandatory! (Depending on how many live sessions we'll have!)
+::: incremental
+-   There are two types of sessions: Statistics (Input) and R Programming (Hands-on)
 
 -   We will use these textbooks (Open Educational Resources - freely available online):
 
     -   Statistical Thinking for the 21st Century (<https://statsthinking21.github.io/statsthinking21-core-site/index.html>)
 
     -   For the R part: Fundamentals of Quantitative Analysis (<https://psyteachr.github.io/quant-fun-v2/>)
-
--   Should we use MS Teams?
-
-    -   Advantage: You can ask questions and discuss there!
-
-    -   Disadvantage: One more program to use/check...
 :::
 
 ::: notes
-Online: Participation, videos, chat...
+Stats Anxiety: It will be packed, but it will be ok (You can always reach me with questions!)!
 
-Or R Session on Tuesday and video before? Some can't make it on Wednesdays... (chat or speak out)
-
-Attendance: If 2x per week sync: max. 3 missed classes, if 1x per week: max. 2 missed classes (unless I know your reasons for missing Wednesdays!) --\> if you missed more, I can't admit you for the exam/report
+For some, e.g. the psychologists, it will be more of a repetition - but you will also learn R.
 
 The input and hands-on sessions will be highly based on these two textbooks. You don't need to read the textbooks, but it will of course help if you either read the chapter before or after the sessions: Repetition is always helpful!
+
+For the hands-on R classes: We will work through the chapters together. You might want to decide to skip the class and work through the chapter on your own, that's fine as well. BUT keep in mind that the Wednesdays are the only synchronous contact points with me and you can also ask questions about the Tuesdays here!\
+(Otherwise ask questions on MS Teams!)
+
+Slides might be text heavy --\> so that you can go through the slides afterwards again (but textbook might also be helpful)
 :::
 
 ## Contents
@@ -90,13 +61,7 @@ The input and hands-on sessions will be highly based on these two textbooks. You
 -   Input (lecture style) with hands-on R sessions
 -   Input could be video based that you should watch before the (R) session
 -   In addition, you should read a few pages in the text books (OER: Statistical Thinking for the 21st Century, <https://statsthinking21.github.io/>, and possibly Fundamentals of Quantitative Analysis, <https://psyteachr.github.io/quant-fun-v2/>)
--   Project: Independently analyze a dataset (exam)
-:::
-
-::: notes
-For some, e.g. the psychologists, it will be more of a repetition - but you will also learn R.
-
-Slides might be text heavy --\> so that you can go through the slides afterwards again (but textbook might also be helpful)
+-   Project: Independently analyze a dataset
 :::
 
 ## Project
@@ -115,30 +80,30 @@ Slides might be text heavy --\> so that you can go through the slides afterwards
 
 ## Calender {.scrollable .smaller}
 
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| Session | Date   | Topic                              | Date R | R Session                              | Project                                  | Reading            |
-+=========+========+====================================+========+========================================+==========================================+====================+
-| 1       | 18.10. | Intro                              | 19.10. | Intro R                                |                                          | ST21: 1-3, QF: 1-3 |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 2       | 25.10. | Probability                        | 26.10. | Data Wrangling                         |                                          | ST21: 4,\          |
-|         |        |                                    |        |                                        |                                          | QF: 4-6            |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 3       | 01.11. | *No Class - holiday*               | 02.11. | Data Visualization                     | Deadline: Dataset                        | QF: 7              |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 4       | 08.11. | Sampling                           | 09.11. | Probability & Sampling in R (*async?*) |                                          | ST21: 7-8,         |
-|         |        |                                    |        |                                        |                                          |                    |
-|         |        |                                    |        |                                        |                                          | QF: 8              |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 5       | 15.11. | Hypothesis Testing                 | 16.11. | *No Class - holiday*                   | Deadline: Research Question & Hypotheses | ST21: 9-10         |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 6       | 22.11. | Comparing Means & Categorical Data | 23.11. | Exercises (t-Tests, Chi²)              |                                          | ST21: 12, 15       |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 7       | 29.11. | (Generalized) Linear Models        | 30.11. | Exercises                              | Deadline: Analysis                       | ST21: 12-13        |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 8       | 06.12. | Linear Mixed Models                | 07.12  | Exercises                              |                                          | ST21: 14           |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
-| 9       | 13.12. | Deadline Report                    | 14.12  | AMA: Biostatistician                   | Deadline: Report                         |                    |
-+---------+--------+------------------------------------+--------+----------------------------------------+------------------------------------------+--------------------+
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| Session | Topic                              | R Session                              | Project                                  | Reading            |
++=========+====================================+========================================+==========================================+====================+
+| 1       | Intro                              | Intro R                                |                                          | ST21: 1-3, QF: 1-3 |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 2       | Probability                        | Data Wrangling                         |                                          | ST21: 4,\          |
+|         |                                    |                                        |                                          | QF: 4-6            |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 3       | *No Class - holiday*               | Data Visualization                     | Deadline: Dataset                        | QF: 7              |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 4       | Sampling                           | Probability & Sampling in R (*async?*) |                                          | ST21: 7-8,         |
+|         |                                    |                                        |                                          |                    |
+|         |                                    |                                        |                                          | QF: 8              |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 5       | Hypothesis Testing                 | *No Class - holiday*                   | Deadline: Research Question & Hypotheses | ST21: 9-10         |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 6       | Comparing Means & Categorical Data | Exercises (t-Tests, Chi²)              |                                          | ST21: 12, 15       |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 7       | (Generalized) Linear Models        | Exercises                              | Deadline: Analysis                       | ST21: 12-13        |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 8       | Linear Mixed Models                | Exercises                              |                                          | ST21: 14           |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
+| 9       | Deadline Report                    | AMA: Biostatistician                   | Deadline: Report                         |                    |
++---------+------------------------------------+----------------------------------------+------------------------------------------+--------------------+
 
 ::: aside
 ST21: Statistical Thinking for the 21st Century\
@@ -183,8 +148,7 @@ The first four weeks will be basics, the next 4 will be analyses.
 :::
 
 ::: notes
-break-out session, 3 min.\
---\> Afterwards: write in chat or speak, what did you come up with?
+break-out session?
 
 possibly show empirical cycle or the like to indicate that stats are necessary at almost every step
 :::
@@ -215,7 +179,7 @@ break down complexity, include uncertainty
 [![Base Rate Fallacy](images/BaseRate.jpg){fig-align="center" width="600"}](https://thedecisionlab.com/biases/base-rate-fallacy)
 
 ::: notes
-Write in chat! (after first bullet point!)
+Write in chat!
 
 example availability heuristic from book (or any other example where intuition is wrong, i.e. vaccinations/covid...)
 
@@ -231,6 +195,8 @@ example availability heuristic from book (or any other example where intuition i
 -   **Predict** how other people would "behave" (generalize to new observations)
 
 ::: notes
+ask first in class?
+
 describe: not useful to look at every single data point/person, but we need s.th. like tendencies/trends...
 :::
 
@@ -264,15 +230,7 @@ Correlation does not imply causation... but is a hint!
 
 . . .
 
-Example: Fatty diets = longer lives?
-
-. . .
-
-\--\> confounding factors?
-
-. . .
-
-e.g. socioeconomic status: Rich people might have healthier diets (incl. fats) and better healthcare...
+Example: Fatty diets = longer lives? \--\> confounding factors?
 
 . . .
 
@@ -283,8 +241,6 @@ give example! Eat more fat = living longer? Confounders (richer people, healthie
 
 RCT: exp control and manipulation, removes confounds if done well\
 At least some more causal evidence!
-
-QUESTIONS so far?
 :::
 
 ## What are Data?
@@ -304,29 +260,23 @@ QUESTIONS so far?
 :::
 
 ::: notes
-Chat --\> after showing slide! Come up with examples for "Data"
-
 Collect: Do you have ideas? What are data you encounter in your lives/work etc? What are differences between these data?
+
+CHAT
 :::
 
 ## What are Data? (2)
 
 ::: {.incremental .smaller}
--   Data types
+-   types of numbers (quantitative!)
 
-    -   types of numbers (quantitative!)
+    -   binary: 0 or 1, TRUE or FALSE (logical)
 
-        -   binary: 0 or 1, TRUE or FALSE (logical)
+    -   integers: whole numbers
 
-        -   integers: whole numbers
+    -   real numbers: decimals/fractions
 
-        -   real numbers: decimals/fractions
-
-    -   character/string: text
-
-    -   factors
-
--   discrete vs. continuous (numeric data!)
+-   discrete vs. continuous
 
     -   discrete?
 
@@ -384,8 +334,6 @@ possibly go through columns and ask for data types?
 :::
 
 ::: notes
-Break-Out session: Brainstorm what makes a good vs. bad measurement!
-
 Group work/brainstorm:
 
 -   What are problems?
@@ -449,7 +397,7 @@ Learning objective today:
 
 -   Why is statistics important?
 
--   What are data?
+-   What are Data?
 
 -   What is reliability and validity?
 

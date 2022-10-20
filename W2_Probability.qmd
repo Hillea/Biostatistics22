@@ -426,12 +426,6 @@ same formula, different noise (simulation) \~ different individuals
 simpler model fits new data better!
 :::
 
-## What is a Linear Model? {.scrollable}
-
-You might have learned about t-Tests, ANOVAs, Regression, Correlation etc.
-
-BUT: [![All models can be thought of as linear models](images/linear_tests_cheat_sheet.png){alt="All models can be thought of as linear models"}](https://lindeloev.github.io/tests-as-linear/)
-
 # Summarizing Data
 
 ## Central Tendency
@@ -460,7 +454,7 @@ How widespread are the data?
 
 **Variance** and **Standard Deviation**
 
-Variance = Mean Squared Error
+**Variance** = Mean Squared Error
 
 $$
 \sigma^2 = \frac{SSE}{N} = \frac{\sum_{i=1}^n (x_i - \mu)^2}{N}
@@ -470,7 +464,7 @@ $$
 
 . . .
 
-Standard Deviation = Root Mean Squared Error
+**Standard Deviation** = Root Mean Squared Error
 
 $$
 SD = \sigma = \sqrt{\sigma^2}
@@ -854,7 +848,7 @@ $P(B)$ = how likely we thought it was to have Covid before we knew the test resu
 
 Models and probability are central to statistics, as we will see.
 
-There are two intepretations of probability: **Frequentist** and **Bayesian**. \
+There are two intepretations of probability: **Frequentist** and **Bayesian**.\
 Frequentists interpret probability as the long-run frequencies (e.g. how many people end up getting Covid).
 
 Bayesians interpret probability as a degree of belief. How likely is it to catch Covid if you o out now? Based on beliefs and knowledge.
