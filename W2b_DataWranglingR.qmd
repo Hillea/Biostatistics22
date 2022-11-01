@@ -22,6 +22,10 @@ library(tidyverse)
 
 ```
 
+::: notes
+start recording!
+:::
+
 ## Data Wrangling?
 
 "Preparation" of the data for analysis: cleaning up variables (outliers, erroneous values, recoding...), changing the structure/format of data frames, merging data sets, calculating new variables, reducing/summarizing variables...
@@ -49,20 +53,21 @@ When wrangling your data in R, you often want to access/use different columns, e
 testdata <- data.frame(a = c(1, 2, 3),  # the c() is important!
                        b = c("a", "b", "c"),
                        c = c(4, 5, 6))
-
+ 
 ## access column a only:
 # Option 1:
 testdata$a
 
 # Option 2:
-testdata[,"a"]
-testdata[, 1]  # index the first column (better practice to use the name!)
+testdata[2:3,"a"]
+testdata[, 1:2]  # index the first column (better practice to use the name!)
 
 # this way, you could also access rows:
 # testdata[1:2, ]  # [rows, columns] --> you can leave it empty if you want all
 # 1:10 would mean 1 to and incl 10!
 
-# Option 3
+# Option 3 (select is a tidyverse function)
+library(tidyverse)
 select(testdata, a)
 
 ```
@@ -87,11 +92,27 @@ You can do all data wrangling in Base R, i.e. without loading any packages. Howe
 
 Base R:
 
+`output_data1 <- function1(data)`
+
+`output_data2 <- function2(output_data1)`
+
+`output_data3 <- function3(output_data2)`
+
+. . .
+
+Or:
+
 `output_data <- function3(function2(function1(data)))`
+
+. . .
 
 Tidyverse:
 
-`output_data <- data %>% function1() %>% function2() %>% function(3)`
+`output_data <- data %>% function1() %>% function2(.) %>% function3()`
+
+::: aside
+`%>%` is called the *pipe*. It takes the output of whatever happens to its left and "hands it over" to the right. There's also a new base-R-pipe: `|>`. It is very similar, but sometimes the functionality differs.
+:::
 
 ::: notes
 Be aware, though, that coding in the tidyverse style is very different than in Base R!
@@ -124,7 +145,7 @@ We will work mainly with functions from the *dplyr* package, but also use *readr
 The most important dplyr functions for data wrangling are:
 
 | Function    | Description                                                                                                                 |
-|-------------|-----------------------------------------------------------|
+|-------------|-----------------------------------------------------------------------------------------------------------------------------|
 | select()    | Include or exclude certain columns (variables)                                                                              |
 | filter()    | Include or exclude certain rows (observations)                                                                              |
 | mutate()    | Create new columns (variables)                                                                                              |
@@ -137,8 +158,6 @@ function names very self-explanatory!
 :::
 
 ## Activity 1: Babynames
-
-Work in small groups (break-out sessions):
 
 1.  Open RStudio and set the working directory, ensure the environment is clean.
 
@@ -188,6 +207,10 @@ load tidyverse last, otherwise functions with same name will be masked from pack
     -   (there are also factors = nominal categories (can be words or numbers))
 :::
 
+::: notes
+ask first for 1 and 2
+:::
+
 ## Activity 3: Your First Plot
 
 1.  In a new code chunk, insert and run the following code:
@@ -212,8 +235,7 @@ We first filter four names, assign this new data to `dat`, and make a linechart 
 
 . . .
 
-2.  Change the code to other female names and run the code again.
-3.  Change the code to male names and change `sex=="F"` to `sex=="M"`.
+2.  Change the code to male names (that are hopefully present in the dataset) and change `sex=="F"` to `sex=="M"`.
 
 # Wrangling Babynames
 
@@ -290,7 +312,7 @@ The second argument, `year > 2000`, is a Boolean or logical expression, which me
 There are also other Boolean expressions:
 
 | Operator | Name                  | is TRUE if and only if                    |
-|----------------|-------------------|-------------------------------------|
+|----------|-----------------------|-------------------------------------------|
 | A \< B   | less than             | A is less than B                          |
 | A \<= B  | less than or equal    | A is less than or equal to B              |
 | A \> B   | greater than          | A is greater than B                       |
@@ -312,6 +334,18 @@ There are also other Boolean expressions:
 
 . . .
 
+First task:
+
+```{r}
+#| eval: false
+#| echo: true
+
+marys <- filter(babynames, name == "Mary")
+
+```
+
+. . .
+
 The second task might be difficult because you have two expressions, `name != "Mary"` and `year > 2000`. You can simply add several expressions separated by comma's in filter:
 
 ```{r}
@@ -319,6 +353,17 @@ The second task might be difficult because you have two expressions, `name != "M
 #| echo: true
 
 no_marys_young <- filter(babynames, name != "Mary", year > 2000)
+```
+
+. . .
+
+Third task:
+
+```{r}
+#| eval: false
+#| echo: true
+
+queens <- filter(babynames, name %in% c("Mary", "Elizabeth", "Victoria"))
 ```
 
 . . .
@@ -388,7 +433,7 @@ dat <- babynames %>%
 # summarize the data, calculating the number of oberservations:
 dat_sum <- summarise(.data = dat,
                      total = sum(n))
-head(dat_sum)
+dat_sum
 ```
 
 As you can see, a new variable named total is created, which contains the total number of observations. There's also just one row in the data frame, because summarise() reduces the data frame (to only include the necessary information)!
@@ -405,13 +450,15 @@ group_dat <- group_by(.data = dat,
 
 `group_dat` now doesn't look much different than `dat`, but the grouping - based on the names, so each name is now a category - is saved in the data frame! (Type `group_dat` in the console and you will see #Groups: name\[4\])
 
-If you now run the summarize() code from before (but with `group_dat` as input), you will get not the total number of observations, but the observations per name!
+If you now run the summarize() code from before (but with `group_dat` as input), you will not get the total number of observations, but the observations per name!
 
 ```{r}
 #| echo: true
+#| eval: true
 
 group_sum <- summarise(.data = group_dat, 
                        total = sum(n)) 
+group_sum
 ```
 
 ## Activity 8b: Grouping and Summarizing 2
@@ -454,56 +501,6 @@ pipe_summary <- babynames %>%
   summarise(mean_decade = mean(n))
 ```
 
-# Data Wrangling 2
-
-## Learning to Wrangle
-
-In a Breakout-session, work in small groups on the assignments (Activity 1 - Activity 8) in this chapter: <https://psyteachr.github.io/quant-fun-v2/data-wrangling-2.html>
-
-## Solutions
-
-We'll use data from a [paper](https://journals.sagepub.com/doi/full/10.1177/0956797617730892) that investigates whether the ability to perform and action influences perception. In particular, the authors wondered whether participants who played Pong would perceive the ball to move faster when they have a small paddle.
-
-::: incremental
-1.  Download the data, set the working directory, clean your environment. Open a new R Markdown file and save it as "DataWrangling2.Rmd". Delete the text in the document.
-
-2.  Add a new code chunk and read in the data.
-
-3.  Look at the data.
-:::
-
-## Solutions
-
-```{r}
-#| echo: true
-
-library("tidyverse")
-pong_data <- read_csv("Data/PongBlueRedBack 1-16 Codebook.csv")
-summary(pong_data)
-
-# look at the data (can also use summary(), str(), head() etc.)
-glimpse(pong_data)
-
-new_pong_data <- pong_data %>% 
-  select(BallSpeed, HitOrMiss, JudgedSpeed, Participant, 
-         TrialNumber) %>% 
-  arrange(desc(HitOrMiss), desc(JudgedSpeed)) %>% 
-  filter(JudgedSpeed == 1,
-         BallSpeed %in% c("2", "4", "5", "7"),
-         HitOrMiss == 0) %>% 
-  filter(TrialNumber > 2) %>% 
-  mutate(TrialNumber = TrialNumber -1) 
-  
-  # summarize (use old data frame because we removed variables)
-pong_data_hits <- pong_data %>% 
-  group_by(BackgroundColor, 
-           PaddleLength) %>% 
-  summarise(total_hits = sum(HitOrMiss, 
-                             na.rm = TRUE),
-            meanhits = mean(HitOrMiss, 
-                            na.rm = TRUE))
-```
-
 ## Counting Data
 
 There are several ways to get the number of observations per group. In the tidyverse style, one is to use (`group_by()` +) `summarise()` with the function `n()`. The other, a shortcut, is to use `count()`:
@@ -511,32 +508,47 @@ There are several ways to get the number of observations per group. In the tidyv
 ```{r}
 #| echo: true
 
-pong_data %>% 
-  group_by(BackgroundColor) %>% 
+babynames %>% 
+   filter(name %in% c("Emily",
+                     "Kathleen",
+                     "Alexandra",
+                     "Beverly"), sex=="F") %>%
+  group_by(name) %>% 
   summarise(n = n())
 
-pong_data %>%
-  count(BackgroundColor)
+babynames %>%
+  filter(name %in% c("Emily",
+                     "Kathleen",
+                     "Alexandra",
+                     "Beverly"), sex=="F") %>%
+  count(name)
 ```
 
 ## Ungrouping
 
 Remember that the grouping done with `group_by()` is saved with the data frame (even though it might not immediately be obvious).
 
-It is good practice to always ungroup your data once you finished the operations you needed the grouping for!
+It is good practice to always `ungroup()` your data once you finished the operations you needed the grouping for!
 
 ```{r}
 #| echo: true
-#| code-line-numbers: "5"
+#| code-line-numbers: "8"
 
-pong_data_ungroup <- pong_data %>%
-  group_by(BackgroundColor, 
-           PaddleLength) %>%
-  summarise(total_hits = sum(HitOrMiss)) %>%
-  ungroup
+babynames %>% 
+   filter(name %in% c("Emily",
+                     "Kathleen",
+                     "Alexandra",
+                     "Beverly"), sex=="F") %>%
+  group_by(name) %>% 
+  summarise(n = n()) %>% 
+  ungroup()
 ```
 
 # Data Wrangling 3
+
+::: notes
+Data Wrangling 2? More exercises! Homework! :)
+:::
 
 ## Tidy Data
 
@@ -557,6 +569,27 @@ Wide vs. long format data?
 -   Wide format: Each participant/animal... has one row, observations per participant are in columns.
 
 -   Long format: Each observation = own row. (Likely several rows per participant: Trials etc.)
+
+::: columns
+::: column
+| ID  | Time_1 | Time_2 |
+|-----|--------|--------|
+| a1  | 230    | 310    |
+| a2  | 195    | 220    |
+| a3  | 245    | 290    |
+:::
+
+::: column
+| ID  | Time | Value |
+|-----|------|-------|
+| a1  | 1    | 230   |
+| a1  | 2    | 310   |
+| a2  | 1    | 195   |
+| a3  | 2    | 220   |
+| a3  | 1    | 245   |
+| a3  | 2    | 290   |
+:::
+:::
 
 ::: notes
 Data often does not come in this format but is rather messy! That's why we wrangle.
@@ -610,6 +643,10 @@ left_join(table4a, table4b, by="country", suffix=c("_cases", "_population"))
 # 3 China             212258       213766        1272915272        1280428583
 ```
 
+::: notes
+Table1 is tidy!
+:::
+
 ## Analyzing the Autism Spectrum Quotient
 
 For the following activities, we will need the following files:
@@ -620,7 +657,7 @@ For the following activities, we will need the following files:
 
 -   [scoring.csv](https://psyteachr.github.io/quant-fun-v2/scoring.csv) containing information on how many points a specific response should get; depending on whether it is forward or reverse coded
 
--   [pinfo.csv](https://psyteachr.github.io/quant-fun-v2/pinfo.csv) containing participant information such as Age, Sex and importantly `ID` number.
+-   [pinfo.csv](https://psyteachr.github.io/quant-fun-v2/pinfo.csv) containing participant information such as `Age`, `Sex` and importantly `ID` number.
 
 ## Set Up
 
@@ -628,7 +665,7 @@ For the following activities, we will need the following files:
 
 2.  Start a new section (# Data Wrangling 3) in your Rmd document.
 
-3.  Make sure you have downloaded the data into your working directory.
+3.  Make sure you have downloaded the data into your working directory (or set your working directory to the class folder with the data).
 
 ## Load the Data
 
@@ -655,11 +692,15 @@ pinfo <- read_csv("Data/pinfo.csv")
 
 ## Look at the Data
 
-Is the data in a tidy format?
+Is the data (`responses`) in a tidy format?
 
 . . .
 
 Why is it not tidy?
+
+::: notes
+wide format
+:::
 
 ## Reformatting the Data
 
@@ -706,8 +747,10 @@ rlong2 <- inner_join(x = NULL,
 
 ```
 
+. . .
+
 ```{r}
-#| echo: false
+#| echo: true
 #| eval: true
 rlong2 <- inner_join(x = rlong, 
                      y = qformats, 
@@ -734,7 +777,7 @@ rscores <- inner_join(rlong2,
 
 ## Calculate the Questionnaire Scores
 
-How do we need to group and summarize the data to get a sum score per person? (Ignoring the reverse coding for now!)
+How do we need to group and summarize the data to get a sum score per person? (Ignoring the reverse coding for now!) Add the correct column names instead of the `NULL`.
 
 ```{r}
 #| echo: true
@@ -766,3 +809,73 @@ aq_scores2 <- responses %>%
   group_by(Id) %>% 
   summarise(AQ = sum(Score)) 
 ```
+
+# Data Wrangling 2
+
+## Learning to Wrangle
+
+In a Breakout-session (or as **homework**), work in small groups on the assignments (Activity 1 - Activity 8) in this chapter: <https://psyteachr.github.io/quant-fun-v2/data-wrangling-2.html>
+
+## Solutions
+
+We'll use data from a [paper](https://journals.sagepub.com/doi/full/10.1177/0956797617730892) that investigates whether the ability to perform an action influences perception. In particular, the authors wondered whether participants who played Pong would perceive the ball to move faster when they have a small paddle.
+
+::: incremental
+1.  Download the data, set the working directory, clean your environment. Open a new R Markdown file and save it as "DataWrangling2.Rmd". Delete the text in the document.
+
+2.  Add a new code chunk and read in the data.
+
+3.  Look at the data.
+:::
+
+## Solutions
+
+```{r}
+#| echo: true
+
+library("tidyverse")
+pong_data <- read_csv("Data/PongBlueRedBack 1-16 Codebook.csv")
+summary(pong_data)
+
+# look at the data (can also use summary(), str(), head() etc.)
+glimpse(pong_data)
+
+new_pong_data <- pong_data %>% 
+  select(BallSpeed, HitOrMiss, JudgedSpeed, Participant, 
+         TrialNumber) %>% 
+  arrange(desc(HitOrMiss), desc(JudgedSpeed)) %>% 
+  filter(JudgedSpeed == 1,
+         BallSpeed %in% c("2", "4", "5", "7"),
+         HitOrMiss == 0) %>% 
+  filter(TrialNumber > 2) %>% 
+  mutate(TrialNumber = TrialNumber -1) 
+  
+  # summarize (use old data frame because we removed variables)
+pong_data_hits <- pong_data %>% 
+  group_by(BackgroundColor, 
+           PaddleLength) %>% 
+  summarise(total_hits = sum(HitOrMiss, 
+                             na.rm = TRUE),
+            meanhits = mean(HitOrMiss, 
+                            na.rm = TRUE))
+```
+
+## Thanks!
+
+Learning objectives:
+
+-   Learn about tidyverse vs. base R
+
+-   Learn and apply the six basic dplyr "verbs"
+
+-   Learn how to join data frames
+
+. . .
+
+Next week:
+
+**No class on Tuesday!**
+
+Wednesday: Data Visualization in R
+
+**Project**: Have found a dataset

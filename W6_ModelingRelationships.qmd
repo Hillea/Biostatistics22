@@ -314,7 +314,7 @@ The Simpson's Paradox is a great example of misleading summaries.
 If we look at the baseball data below, we see that David Justice has a better batting average in every single year, but Derek Jeter has a better overall batting average:
 
 | Player        | 1995    |          | 1996    |          | 1997    |          | Combined |          |
-|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+|---------------|---------|----------|---------|----------|---------|----------|----------|----------|
 | Derek Jeter   | 12/48   | .250     | 183/582 | .314     | 190/654 | .291     | 385/1284 | **.300** |
 | David Justice | 104/411 | **.253** | 45/140  | **.321** | 163/495 | **.329** | 312/1046 | .298     |
 
@@ -644,7 +644,7 @@ We can't interpret the $p$-value as evidence in favor of $H_0$ (i.e. larger $p$-
 
 More often, we want to know whether there is a difference between the means of *two groups*.
 
-Example: Do regular marijuana smokers watch more television? \
+Example: Do regular marijuana smokers watch more television?\
 In this example, we expect that they watch *more* TV, which leads us to the following directed hypotheses:
 
 $H_0$ = marijuana smokers watch less or equally often TV,\

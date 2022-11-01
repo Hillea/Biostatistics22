@@ -13,37 +13,14 @@ editor: visual
 from: markdown+emoji
 ---
 
-## Quiz
+# Quiz
 
-Which of the following functions would I use if I wanted to keep only certain columns?
+```{r}
+library(tidyverse)
 
--   select()
+```
 
--   arrange()
-
--   mutate()
-
--   filter()
-
-Which of the following functions would I use if I wanted to add a new column of information?
-
--   select()
-
--   arrange()
-
--   mutate()
-
--   filter()
-
-Which boolean expression would I add to a [`filter()`](https://dplyr.tidyverse.org/reference/filter.html) function to keep only Male babies in the original `babynames` data?
-
--   sex == F
-
--   sex == M
-
--   sex \< F
-
--   Sex == M
+. . .
 
 If I type this code into the console (and run it), I will get the following error. Why?
 
@@ -54,7 +31,177 @@ If I type this code into the console (and run it), I will get the following erro
     Error in summarise(.data = babynames, mean_n = mean(n)) : 
       could not find function "summarise"
 
-## Data Viz
+# Data Wrangling: Analyzing the Autism Spectrum Quotient
+
+For the following activities, we will need the following files:
+
+-   [responses.csv](https://psyteachr.github.io/quant-fun-v2/responses.csv) containing the AQ survey responses to each of the 10 questions for the 66 participants
+
+-   [qformats.csv](https://psyteachr.github.io/quant-fun-v2/qformats.csv) containing information on how a question should be coded - i.e. forward or reverse coding
+
+-   [scoring.csv](https://psyteachr.github.io/quant-fun-v2/scoring.csv) containing information on how many points a specific response should get; depending on whether it is forward or reverse coded
+
+-   [pinfo.csv](https://psyteachr.github.io/quant-fun-v2/pinfo.csv) containing participant information such as `Age`, `Sex` and importantly `ID` number.
+
+## Set Up
+
+1.  Clear your environment or restart the R session (Session -\> Restart R).
+
+2.  Start a new section (# Data Wrangling 3) in your Rmd document.
+
+3.  Make sure you have downloaded the data into your working directory (or set your working directory to the class folder with the data).
+
+## Load the Data
+
+Load the four .csv files into your environment, e.g.:
+
+```{r}
+#| echo: true
+#| eval: false
+
+responses <- read_csv("responses.csv") 
+qformats <-                 # load in question formats
+scoring <-                  # load in scoring info
+pinfo <-                    # load in participant information
+```
+
+```{r}
+#| echo: false
+#| message: false
+responses <- read_csv("Data/responses.csv") 
+qformats <- read_csv("Data/qformats.csv")               
+scoring <- read_csv("Data/scoring.csv")                 
+pinfo <- read_csv("Data/pinfo.csv")                   
+```
+
+## Look at the Data
+
+Is the data (`responses`) in a tidy format?
+
+. . .
+
+Why is it not tidy?
+
+. . .
+
+Wide format!
+
+## Reformatting the Data
+
+Let's bring the wide data in a longer, tidy format!
+
+. . .
+
+There are several functions in R to reformat data, but the newest ones are `pivot_longer()` and `pivot_wider()`.
+
+Run the code and see what changes:
+
+```{r}
+#| echo: true
+
+rlong <- pivot_longer(data = responses,
+                      cols = Q1:Q10,
+                      names_to = "Question", 
+                      values_to = "Response")
+```
+
+. . .
+
+Describe what the function does, what does the input/the arguments mean?
+
+## Joining the Data
+
+We now want to combine the different data sets: We want to have the information how the questionnaire has to be scored included with the items.
+
+We can find the scoring information (i.e. how the questions are framed, positive or negative/whether they need to be reversed) in the `qformats` tibble. Furthermore, we can find how many points are given to each item/response in `scoring`.
+
+We can use the function `inner_join()` to merge the tibbles.
+
+. . .
+
+Activity: Replace the `NULL` values in the below code with the necessary variable names to join `rlong` and `qformats` by `Question`.
+
+```{r}
+#| echo: true
+#| eval: false
+rlong2 <- inner_join(x = NULL, 
+                     y = NULL, 
+                     by = "NULL")
+
+
+```
+
+. . .
+
+```{r}
+#| echo: true
+#| eval: true
+rlong2 <- inner_join(x = rlong, 
+                     y = qformats, 
+                     by = "Question")
+```
+
+Describe what happened?
+
+. . .
+
+What is forward and reverse scoring?
+
+## Combining more Data
+
+You can only join two data frames/tibbles at once.\
+Now add the scoring data:
+
+```{r}
+#| echo: true
+rscores <- inner_join(rlong2, 
+                      scoring, 
+                      c("QFormat", "Response"))
+```
+
+::: notes
+Reverse scoring is taken care of by joining on QFormat as well!
+:::
+
+## Calculate the Questionnaire Scores
+
+How do we need to group and summarize the data to get a sum score per person? \
+Add the correct column names instead of the `NULL`.
+
+```{r}
+#| echo: true
+aq_scores <- rscores %>% 
+             group_by(NULL) %>%
+             summarise(AQ = sum(NULL))
+```
+
+. . .
+
+```{r}
+#| echo: true
+aq_scores <- rscores %>% 
+             group_by(Id) %>% # group by the ID number in column Id
+             summarise(AQ = sum(Score)) # sum column Score to obtain AQ scores.
+```
+
+## Pipe it all together!
+
+```{r}
+#| echo: true
+
+aq_scores2 <- responses %>% 
+  pivot_longer(cols = Q1:Q10,
+               names_to = "Question", 
+               values_to = "Response") %>%  
+  inner_join(qformats, "Question") %>% 
+  inner_join(scoring, c("QFormat", "Response")) %>% 
+  group_by(Id) %>% 
+  summarise(AQ = sum(Score)) 
+```
+
+# 
+
+# Data Viz
 
 Why should we visualize our data?
 
@@ -72,9 +219,9 @@ It's fun! (And plots are probably the most important information in papers!)
 
 ## ggplot
 
-We will use a package called ggplot2 (which is part of the tidyverse). ggplot2 is a very versatile package and allows us to make beautiful, publication ready figures.
+We will use a package called `ggplot2` (which is part of the tidyverse). ggplot2 is a very versatile package and allows us to make beautiful, publication ready figures.
 
-The main function to "start" plotting is ggplot() - we will then add layers of data and layers to tweak the appearance.
+The main function to "start" plotting is `ggplot()` - we will then add layers of data and layers to tweak the appearance.
 
 ![Layers of a ggplot](images/ggplotlayers.PNG){fig-alt="Depiction of how a plot is built up from different layers in ggplot2" width="502"}
 
@@ -320,6 +467,46 @@ ggplot(summarydata, aes(x = sex, fill = sex)) +
 
 ```
 
+## Grouped Plots
+
+Let's go back to the bar plot (but works similarly for other plots as well): Imagine that you have several *factors* that you want to use to group your data, such as gender and income. In this case, you could use a **grouped bar plot**:
+
+```{r}
+#| echo: true
+#| output-location: column-fragment
+#| code-line-numbers: "1|2"
+
+ggplot(summarydata, aes(x = sex, fill = income)) +
+  geom_bar(position = "dodge",
+           show.legend = TRUE, 
+           alpha = .8) +
+  scale_x_discrete(name = "Participant Sex", 
+                   labels = c("Female", "Male")) +
+  scale_y_continuous(name = "Number of participants") +
+  theme_minimal() +
+  scale_fill_viridis_d(option = "E")
+```
+
+## Facetting
+
+You could also use **facets** to divide your data visualizations:
+
+```{r}
+#| echo: true
+#| output-location: column-fragment
+#| code-line-numbers: "1|2"
+
+ggplot(summarydata, aes(x = sex, fill = sex)) +
+  geom_bar(show.legend = FALSE, 
+           alpha = .8) +
+  scale_x_discrete(name = "Participant Sex", 
+                   labels = c("Female", "Male")) +
+  scale_y_continuous(name = "Number of participants") +
+  theme_minimal() +
+  scale_fill_viridis_d(option = "E")  +
+  facet_wrap(~income)
+```
+
 # Activity 4: The Violin-Boxplot
 
 There are a number of different figure types you can plot with the different geoms, e.g. `geom_point()`, `geom_histogram()`, `geom_line()`...
@@ -353,19 +540,47 @@ ggplot(summarydata, aes(x = income,
   scale_fill_viridis_d()
 ```
 
+::: notes
+In this case, not the **count** on the y-axis, but another cont. variable!
+:::
+
 ## Layer Order
 
 The order of layers is crucial, as the plot will be built up in that order:
 
+::: columns
+::: column
 ```{r}
 #| echo: true
 ggplot(summarydata, aes(x = income, y = ahiTotal)) +
   geom_violin() +
   geom_boxplot()
+```
+:::
 
+::: column
+```{r}
+#| echo: true
 ggplot(summarydata, aes(x = income, y = ahiTotal)) +
   geom_boxplot() +
-  geom_violin()
+  geom_violin() 
+```
+:::
+:::
+
+## Scatterplot
+
+If we have continuous data of two variables, we often want to make a **scatter plot**:
+
+```{r}
+#| echo: true
+#| output-location: column-fragment
+#| code-line-numbers: "1|2|5"
+
+ggplot(summarydata, aes(x = age, y = cesdTotal))+
+  geom_point()+
+  geom_smooth(method=lm) # if you don't want the shaded CI, add se = FALSE to this
+
 ```
 
 ## Saving your Figures
@@ -432,3 +647,29 @@ Do not add `ggsave()` to the plot with a `+`. Instead run it on a separate line!
 
 If plot is assigned to object, it won't be displayed unless you type `viobox` in the console!
 :::
+
+## Thanks!
+
+Check out [Chapter 13 of QuantFun](https://psyteachr.github.io/quant-fun-v2/visualisation.html) for further exercises and tips for data visualization!
+
+Also keep in mind: Coding is a lot of googling things!
+
+You can also check out the [R Graph Gallery](https://r-graph-gallery.com/) for code for different types of plots.
+
+. . .
+
+**Learning objectives**
+
+-   Know how to transform (pivot) and join data
+
+-   Understand the basics of a ggplot (layers etc.)
+
+-   Be able to make your first own plots, such as bar charts, violin + boxplots, scatterplots
+
+-   Know what a grouped plot and a facetted plot is
+
+. . .
+
+**Next:**
+
+-   Sampling

@@ -32,6 +32,14 @@ options(digits = 2)
 set.seed(123456) # set random seed to exactly replicate results
 ```
 
+::: notes
+no interactions planned, a lot of input
+
+but feel free to ask questions anytime! It's important that you understand the concepts!
+
+(We might not manage to go through all the slides, but still ask questions - slides/video online)
+:::
+
 ## What is a Model?
 
 > " "models" are generally simplifications of things in the real world that nonetheless convey the essence of the thing being modeled"
@@ -39,8 +47,6 @@ set.seed(123456) # set random seed to exactly replicate results
 > "All models are wrong but some are useful" (G. Box)
 
 (ST21, Ch 5)
-
-**. . .**
 
 **Aim**: Find the model that most efficiently and accurately summarizes the way in which the data were actually generated.
 
@@ -231,7 +237,7 @@ The model fit is now much better: RMSE = 8.36 cm.
 
 . . .
 
-Adding age? Does not improve model too much!
+Adding gender? Does not improve model too much!
 
 ::: notes
 w/o intercept: A, no $\beta_0$
@@ -254,17 +260,17 @@ Can be conflicting!
 Where does error come from?
 
 ::: incremental
--   wrong model specification
-
-    -   e.g. height goes *down* with age
-
-    -   important variable is missing from model (age!)
-
 -   measurement error (noise): random variation in data
 
     -   actual measurement is biased (broken device, bias etc.)
 
     -   "thing measured" may be biased/varies a lot
+
+-   wrong model specification
+
+    -   e.g. height goes *down* with age
+
+    -   important variable is missing from model (age!)
 :::
 
 ## Examples Measurement Error
@@ -446,6 +452,21 @@ Mean, Median, Mode?
 **Median** = "middle" value if ranked, minimizes sum of absolute error, less influenced by extreme values\
 **Mode** = most often occurring value
 
+. . .
+
+Example:
+
+If 3 people earn 10,000 Euros per *year* and 1 person earns 1,000,000:\
+Mean: 257,500 Euros\
+Median: (Rank: 10,000; 10,000; 10,000; 1,000,000 -\> middle value = )10,000 Euros\
+Mode: 10,000 Euros
+
+::: notes
+examples
+
+mean: income --\> if one person earns a million and 3 only 10.000 --\> mean = 257.500
+:::
+
 ## Variability
 
 How widespread are the data?
@@ -503,7 +524,7 @@ $$
 
 . . .
 
-```{r zDensityCDF,echo=FALSE,fig.cap="Density (top) and cumulative distribution (bottom) of a standard normal distribution, with cutoffs at one standard deviation above/below the mean."}
+```{r zDensityCDF,echo=FALSE,fig.width=5,fig.height=3, fig.cap="Density (top) and cumulative distribution (bottom) of a standard normal distribution, with cutoffs at one standard deviation above/below the mean."}
 
 # First, create a function to generate plots of the density and CDF
 dnormfun <- function(x) {
@@ -661,7 +682,7 @@ Definitions:
 Let's say we have a variable $X$ that contains $N$ independent events:
 
 $$
-X = E_1, E_2, …, E_n$
+X = E_1, E_2, …, E_n
 $$
 
 The probability of a certain event (event $i$) is then:
@@ -711,7 +732,7 @@ Rules of probability
 2.  *Intersection*: The probability of a conjoint event/that [both]{.underline} A and B will occur ($\cap$):
     -   $P(A \cap B) = P(A) * P(B)$ (if A and B are *independent*!!)
 3.  *Addition*: Probability of [either]{.underline} of two events occurring ($\cup$):
-    -   $p(A \cup B) = P(A) + P(B) - P(A \cap B)$
+    -   $P(A \cup B) = P(A) + P(B) - P(A \cap B)$
 
     -   We add both but subtract the intersection, prevents us from counting occurrence twice!
 
@@ -732,20 +753,6 @@ Probability is important for statistics, so it is necessary to go through the ru
 
 \--\> necessary to draw inferences from data! How representative are data for population?
 :::
-
-## Probability Distributions
-
-**Probability distribution** = probability of all possible outcomes in an experiment.
-
-. . .
-
-Helps us answer questions like: How likely is it that event X occurs/we find specific value of X?
-
-. . .
-
-**Cumulative Probability Distribution**
-
-\--\> how likely is it to find a value that is as extreme or larger (or as small or smaller!)?
 
 ## Conditional Probability
 
@@ -844,6 +851,28 @@ $P(A|B)/P(A)$ = how likely the data are given B relative to overall marginal lik
 $P(B)$ = how likely we thought it was to have Covid before we knew the test result
 :::
 
+## Probability Distributions
+
+**Probability distribution** = probability of all possible outcomes in an experiment.
+
+. . .
+
+Helps us answer questions like: How likely is it that event X occurs/we find specific value of X?
+
+. . .
+
+**Cumulative Probability Distribution**
+
+\--\> how likely is it to find a value that is as extreme or larger (or as small or smaller!)?
+
+::: notes
+examples:\
+- die: uniform\
+- height: normal dist
+
+draw dists, cutoff, all the area under curve before, CPD
+:::
+
 ## Sum Up
 
 Models and probability are central to statistics, as we will see.
@@ -851,7 +880,7 @@ Models and probability are central to statistics, as we will see.
 There are two intepretations of probability: **Frequentist** and **Bayesian**.\
 Frequentists interpret probability as the long-run frequencies (e.g. how many people end up getting Covid).
 
-Bayesians interpret probability as a degree of belief. How likely is it to catch Covid if you o out now? Based on beliefs and knowledge.
+Bayesians interpret probability as a degree of belief. How likely is it to catch Covid if you go out now? Based on beliefs and knowledge.
 
 ::: notes
 Freq: Difficult to wrap ones' head around if an event occurs only once.
@@ -861,6 +890,28 @@ Bayes: Bit more subjective
 
 ## Thanks
 
-This week: R session on Data Wrangling.
+Learning objectives:
 
-Net week: Sampling.
+-   Describe the basic equation for statistical models (data=model + error)
+
+-   Describe different measures of central tendency and dispersion, how they are computed, and which are appropriate under what circumstances.
+
+-   Compute a Z-score and describe why they are useful.
+
+-   Understand different concepts of probability:
+
+    -   joint and conditional probability
+
+    -   statistical independence
+
+    -   Bayes' Theorem
+
+    -   probability distributions
+
+. . .
+
+Next topics:
+
+-   R session on Data Wrangling.
+
+-   Sampling.
